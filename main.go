@@ -152,7 +152,12 @@ func install(rootDir string) error {
 		log.Printf("you will need to add %s to your shell's rc file as you already have nodejs installed", rootDir)
 	}
 
-	bin1, err := os.Open(os.Args[0])
+	binPath, err := exec.LookPath(os.Args[0])
+	if err != nil {
+		return err
+	}
+
+	bin1, err := os.Open(binPath)
 	if err != nil {
 		return err
 	}
