@@ -72,11 +72,18 @@ func init() {
 func main() {
 	var err error
 
+	u, err := user.Current()
+	if err != nil {
+		log.Fatalf("failed to detect current user: %v", err)
+	}
+
+	root := filepath.Join(u.HomeDir, ".node-proxy")
+
 	if filepath.Base(os.Args[0]) == "node-proxy" {
 		log.Println("Running node-proxy without passing to node binary")
 		switch os.Args[1] {
 		case "install":
-			if err = install(); err != nil {
+			if err = install(filepath.Join(root, "bin")); err != nil {
 				log.Fatalf("failed to initialise node proxy: %v", err)
 			}
 		default:
@@ -85,14 +92,16 @@ func main() {
 		return
 	}
 
+	root = filepath.Join(root, "versions")
+
 	if NodeJsVersion == "" {
 		log.Println("no nodejs version detected from sources, using latest installed")
-		NodeJsVersion, err = findMaxInstalledVersion("/opt/node-proxy")
+		NodeJsVersion, err = findMaxInstalledVersion(root)
 		if err != nil {
 			log.Fatalf("failed to detect current nodejs version: %v", err)
 		}
 	}
-	n, err := pkg.NewNodeManager(false, NodeJsVersion, "/opt/node-proxy")
+	n, err := pkg.NewNodeManager(false, NodeJsVersion, root)
 	if err != nil {
 		panic(fmt.Errorf("failed to initialize node manager: %v", err))
 	}
@@ -133,23 +142,14 @@ func findMaxInstalledVersion(rootDir string) (string, error) {
 	return max, nil
 }
 
-func install() error {
-	u, err := user.Current()
-	if err != nil {
+func install(rootDir string) error {
+	if err := os.MkdirAll(rootDir, 0750); err != nil {
 		return err
 	}
 
-	if u.Uid != "0" {
-		return fmt.Errorf("run with sudo to get this to work")
-	}
-
-	if err = os.MkdirAll("/opt/node-proxy/bin", 0750); err != nil {
-		return err
-	}
-
-	_, err = exec.LookPath("node")
+	_, err := exec.LookPath("node")
 	if err == nil {
-		log.Println("you will need to add /opt/node-proxy/bin to your shell's rc file as you already have nodejs installed")
+		log.Printf("you will need to add %s to your shell's rc file as you already have nodejs installed", rootDir)
 	}
 
 	bin1, err := os.Open(os.Args[0])
@@ -157,7 +157,7 @@ func install() error {
 		return err
 	}
 
-	bin2, err := os.OpenFile("/opt/node-proxy/bin/node", os.O_CREATE|os.O_WRONLY, 0750)
+	bin2, err := os.OpenFile(filepath.Join(rootDir, "node"), os.O_CREATE|os.O_WRONLY, 0750)
 	if err != nil {
 		return err
 	}
