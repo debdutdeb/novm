@@ -15,9 +15,9 @@ import (
 )
 
 type packageJson struct {
-	Engine struct {
+	Engines struct {
 		Node string `json:"node"`
-	} `json:"engine"`
+	} `json:"engines"`
 }
 
 var NodeJsVersion string = ""
@@ -42,7 +42,7 @@ func init() {
 			log.Fatalf("failed to read package.json: %v", err)
 		}
 
-		NodeJsVersion = p.Engine.Node
+		NodeJsVersion = p.Engines.Node
 
 		return
 	}
