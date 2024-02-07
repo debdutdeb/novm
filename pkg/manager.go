@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	gopark "github.com/debdutdeb/gopark/pkg/utils"
+	"golang.org/x/mod/semver"
 )
 
 var ErrNodeNotInstalled = errors.New("nodejs not installed")
@@ -39,10 +40,17 @@ func NewNodeManager(global bool, version string, rootDir string) (*N, error) {
 	n := &N{
 		global:  global,
 		version: version,
-		arch:    runtime.GOARCH,
 	}
 
-	n.installDir = filepath.Join(rootDir, version, runtime.GOOS, runtime.GOARCH)
+	if (runtime.GOOS == "darwin" && runtime.GOARCH == "arm64" && semver.Compare(version, "v16.0.0") == -1) || runtime.GOARCH == "amd64" {
+		// install the amd64 version and let it run through rosetta2
+		n.arch = "x64"
+	} else {
+		// TODO is this right? given how x64 differs
+		n.arch = runtime.GOARCH
+	}
+
+	n.installDir = filepath.Join(rootDir, version, runtime.GOOS, n.arch)
 
 	n.environment = os.Environ()
 
@@ -180,7 +188,7 @@ func (n *N) Version() string {
 }
 
 func (n *N) _assets() (url string, filename string) {
-	filename = fmt.Sprintf("node-%s-%s-%s.tar.xz", n.version, runtime.GOOS, runtime.GOARCH)
+	filename = fmt.Sprintf("node-%s-%s-%s.tar.xz", n.version, runtime.GOOS, n.arch)
 	url = fmt.Sprintf("https://nodejs.org/download/release/%s/%s", n.version, filename)
 	return
 }
