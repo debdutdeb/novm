@@ -52,7 +52,7 @@ func NewNodeManager(global bool, version string, rootDir string) (*N, error) {
 
 	n.installDir = filepath.Join(rootDir, version, runtime.GOOS, n.arch)
 
-	n.environment = os.Environ()
+	n.environment = append(os.Environ(), "NP_NODE_VERSION="+version) // make sure we continue using this version on every nested call (like lifecycle scripts) in case source isn't environment variable
 
 	return n, n.findInstall()
 }
@@ -149,6 +149,8 @@ func (n *N) Run(args ...string) (err error) {
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+
+	cmd.Env = n.environment
 
 	err = cmd.Start()
 	if err != nil {
