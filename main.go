@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"os/user"
 	"path/filepath"
+	"strings"
 
 	"github.com/debdutdeb/node-proxy/pkg"
 	"golang.org/x/mod/semver"
@@ -111,6 +112,14 @@ func main() {
 		log.Fatalf("failed to install node version %v", err)
 	}
 
+	if os.Args[0] == "npm" {
+		if err = n.Npm().Run(os.Args[1:]...); err != nil {
+			log.Fatalf("failed to run npm: %v", err)
+		}
+
+		return
+	}
+
 	err = n.Run(os.Args[1:]...)
 	if err != nil {
 		log.Fatalf("failed to run nodejs: %v", err)
@@ -172,5 +181,39 @@ func install(rootDir string) error {
 		return err
 	}
 
-	return nil
+	bin2, err = os.OpenFile(filepath.Join(rootDir, "npm"), os.O_CREATE|os.O_WRONLY, 0750)
+	_, err = io.Copy(bin2, bin1)
+	if err != nil {
+		return err
+	}
+
+	return setnpmPrefix()
+}
+
+func setnpmPrefix() error {
+	f, err := os.OpenFile(filepath.Join(os.Getenv("HOME"), ".npmrc"), os.O_RDWR|os.O_CREATE, 0750)
+	if err != nil {
+		return err
+	}
+
+	// TODO(me): optimize
+	b, err := io.ReadAll(f)
+	if err != nil {
+		return err
+	}
+
+	lines := strings.Split(string(b), "\n")
+
+	for i, line := range lines {
+		if len(line) >= 7 && line[:7] == "prefix=" {
+			lines[i] = "prefix=" + filepath.Join(os.Getenv("HOME"), ".node-proxy")
+			break
+		}
+	}
+
+	f.Seek(0, io.SeekStart)
+
+	_, err = f.WriteString(strings.Join(lines, "\n"))
+
+	return err
 }

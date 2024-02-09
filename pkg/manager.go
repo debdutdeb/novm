@@ -29,6 +29,7 @@ type N struct {
 
 type NpmRunner interface {
 	CaptureOutput(args ...string) ([]byte, []byte, error)
+	Run(args ...string) error
 }
 
 func NewNodeManager(global bool, version string, rootDir string) (*N, error) {
