@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -132,6 +133,10 @@ func findMaxInstalledVersion(rootDir string) (string, error) {
 		return "", err
 	}
 
+	if len(entries) == 0 {
+		return "", fmt.Errorf("no nodejs versions found")
+	}
+
 	if !semver.IsValid(entries[0].Name()) {
 		return "", fmt.Errorf("root install directory seems to be polluted with files unknown %s", entries[0].Name())
 	}
@@ -166,24 +171,11 @@ func install(rootDir string) error {
 		return err
 	}
 
-	bin1, err := os.Open(binPath)
-	if err != nil {
+	if err = forceSymlink(binPath, filepath.Join(rootDir, "node")); err != nil {
 		return err
 	}
 
-	bin2, err := os.OpenFile(filepath.Join(rootDir, "node"), os.O_CREATE|os.O_WRONLY, 0750)
-	if err != nil {
-		return err
-	}
-
-	_, err = io.Copy(bin2, bin1)
-	if err != nil {
-		return err
-	}
-
-	bin2, err = os.OpenFile(filepath.Join(rootDir, "npm"), os.O_CREATE|os.O_WRONLY, 0750)
-	_, err = io.Copy(bin2, bin1)
-	if err != nil {
+	if err = forceSymlink(binPath, filepath.Join(rootDir, "npm")); err != nil {
 		return err
 	}
 
@@ -216,4 +208,21 @@ func setnpmPrefix() error {
 	_, err = f.WriteString(strings.Join(lines, "\n"))
 
 	return err
+}
+
+func forceSymlink(oldname, newname string) error {
+	if err := os.Symlink(oldname, newname); err != nil {
+		if errors.Is(err, os.ErrExist) {
+			err = os.Remove(newname)
+			if err != nil {
+				return err
+			}
+
+			return os.Symlink(oldname, newname)
+		}
+
+		return err
+	}
+
+	return nil
 }
