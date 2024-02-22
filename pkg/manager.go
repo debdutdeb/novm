@@ -1,13 +1,18 @@
 package pkg
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"io/fs"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
 	gopark "github.com/debdutdeb/gopark/pkg/utils"
 	"golang.org/x/mod/semver"
@@ -17,14 +22,27 @@ var ErrNodeNotInstalled = errors.New("nodejs not installed")
 
 // the node version manager
 
+type nCacheItem struct {
+	Version  string      `json:"version"`
+	Date     string      `json:"date"`
+	Files    []string    `json:"files"`
+	Lts      interface{} `json:"lts,omitempty"`
+	Security bool        `json:"security"`
+}
+
+type nCache []nCacheItem
+
 type N struct {
 	version     string
 	arch        string
+	rootDir     string
 	installDir  string
 	environment []string
 
 	binPath string
 	global  bool
+
+	cache nCache
 }
 
 type NpmRunner interface {
@@ -33,29 +51,118 @@ type NpmRunner interface {
 }
 
 func NewNodeManager(global bool, version string, rootDir string) (*N, error) {
-
-	if version[0] != 'v' {
-		version = "v" + version
-	}
-
 	n := &N{
 		global:  global,
 		version: version,
+		rootDir: rootDir,
 	}
 
-	if (runtime.GOOS == "darwin" && runtime.GOARCH == "arm64" && semver.Compare(version, "v16.0.0") == -1) || runtime.GOARCH == "amd64" {
-		// install the amd64 version and let it run through rosetta2
+	if err := n.initCache(); err != nil {
+		return nil, err
+	}
+
+	if runtime.GOARCH == "amd64" ||
+		(runtime.GOOS == "darwin" &&
+			semver.IsValid(n.version) &&
+			semver.Compare(n.version, "v16.0.0") == -1) {
 		n.arch = "x64"
 	} else {
 		// TODO is this right? given how x64 differs
 		n.arch = runtime.GOARCH
 	}
 
-	n.installDir = filepath.Join(rootDir, version, runtime.GOOS, n.arch)
+	// filetype is what kind of download artifact I am looking for
+	myFileType := ""
 
-	n.environment = append(os.Environ(), "NP_NODE_VERSION="+version) // make sure we continue using this version on every nested call (like lifecycle scripts) in case source isn't environment variable
+	if runtime.GOOS == "darwin" {
+		myFileType = "osx-" + n.arch + "-tar"
+	} else {
+		myFileType = runtime.GOOS + "-" + runtime.GOARCH
+	}
 
-	return n, n.findInstall()
+	switch version {
+	case "latest":
+	latest_release:
+		for _, release := range n.cache {
+			for _, fileType := range release.Files {
+				if fileType == myFileType {
+					n.version = release.Version
+					break latest_release
+				}
+			}
+		}
+	case "lts":
+	lts_release:
+		for _, release := range n.cache {
+			_, ok := release.Lts.(string)
+			if !ok {
+				continue
+			}
+
+			for _, fileType := range release.Files {
+				if fileType == myFileType {
+					n.version = release.Version
+					break lts_release
+				}
+			}
+		}
+	default:
+		if version[0] != 'v' {
+			version = "v" + version
+		}
+
+		found := false
+
+		for _, release := range n.cache {
+			if release.Version != version {
+				continue
+			}
+
+			found = true
+
+			for _, fileType := range release.Files {
+				if fileType == myFileType {
+					n.version = release.Version
+				}
+			}
+
+			if found && n.version == "" {
+				return nil, fmt.Errorf("given version not found for your current platform")
+			} else if !found {
+				return nil, fmt.Errorf("invalid nodejs version")
+			}
+
+			break
+		}
+	}
+
+	if n.version == "" {
+		return nil, fmt.Errorf("failed to find the latest release for your platform")
+	}
+
+	n.installDir = filepath.Join(rootDir, "versions", n.version, runtime.GOOS, n.arch)
+	n.environment = append(os.Environ(), "NP_NODE_VERSION="+n.version) // make sure we continue using this version on every nested call (like lifecycle scripts) in case source isn't environment variable
+
+	if n.global {
+		binPath, err := exec.LookPath("node")
+		if err != nil && errors.Is(err, exec.ErrNotFound) {
+			return nil, ErrNodeNotInstalled
+		} else if err != nil {
+			return nil, fmt.Errorf("unknown error trying to detect nodejs global installation: %v", err)
+		}
+
+		n.binPath = binPath
+
+		return n, nil
+	}
+
+	n.binPath = filepath.Join(n.installDir, "bin", "node")
+
+	path := os.Getenv("PATH")
+
+	n.environment = append([]string{fmt.Sprintf("PATH=%s:%s", filepath.Dir(n.binPath), path)}, n.environment...)
+
+	return n, nil
 }
 
 func (n *N) Npm() NpmRunner {
@@ -120,29 +227,6 @@ func (n *N) EnsureInstalled() error {
 	return n.Install()
 }
 
-func (n *N) findInstall() error {
-	if n.global {
-		binPath, err := exec.LookPath("node")
-		if err != nil && errors.Is(err, exec.ErrNotFound) {
-			return ErrNodeNotInstalled
-		} else if err != nil {
-			return fmt.Errorf("unknown error trying to detect nodejs global installation: %v", err)
-		}
-
-		n.binPath = binPath
-
-		return nil
-	}
-
-	n.binPath = filepath.Join(n.installDir, "bin/node")
-
-	path := os.Getenv("PATH")
-
-	n.environment = append([]string{fmt.Sprintf("PATH=%s:%s", filepath.Dir(n.binPath), path)}, n.environment...)
-
-	return nil
-}
-
 func (n *N) Run(args ...string) (err error) {
 	cmd := exec.Command(n.binPath, args...)
 
@@ -194,4 +278,78 @@ func (n *N) _assets() (url string, filename string) {
 	filename = fmt.Sprintf("node-%s-%s-%s.tar.xz", n.version, runtime.GOOS, n.arch)
 	url = fmt.Sprintf("https://nodejs.org/download/release/%s/%s", n.version, filename)
 	return
+}
+
+func (n *N) initCache() error {
+	if stat, err := os.Stat(n.rootDir); err != nil {
+		if os.IsNotExist(err) {
+			err = os.MkdirAll(n.rootDir, 0750)
+			if err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+	} else {
+		if !stat.IsDir() {
+			return errors.New("can not continue since expected root directory is not a directory")
+		}
+	}
+
+	cacheFilename := filepath.Join(n.rootDir, "node_versions.json")
+
+	var (
+		cacheExists bool = true
+		stat        fs.FileInfo
+		err         error
+	)
+
+	if stat, err = os.Stat(cacheFilename); err != nil {
+		if os.IsNotExist(err) {
+			cacheExists = false
+		} else {
+			return err
+		}
+	}
+
+	cacheFile, err := os.OpenFile(cacheFilename, os.O_CREATE|os.O_RDWR, 0750)
+	if err != nil {
+		return err
+	}
+
+	var data nCache
+
+	if cacheExists && time.Since(stat.ModTime()) < (time.Hour*24) {
+		if err = json.NewDecoder(cacheFile).Decode(&data); err != nil {
+			return err
+		}
+
+		n.cache = data
+		return nil
+	}
+
+	resp, err := http.Get("https://nodejs.org/download/release/index.json")
+	if err != nil {
+		return err
+	}
+
+	content, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	resp.Body.Close()
+
+	_, err = cacheFile.Write(content)
+	if err != nil {
+		return err
+	}
+
+	if err = json.Unmarshal(content, &data); err != nil {
+		return err
+	}
+
+	n.cache = data
+
+	return nil
 }
