@@ -240,7 +240,7 @@ func (n *N) Npm() NpmRunner {
 }
 
 func (n *N) Install() error {
-	tmpDir, err := gopark.MkdirTemp()
+	tmpDir, err := gopark.MkdirTemp("", "novm")
 	if err != nil {
 		return fmt.Errorf("failed to create temporary directory to install nodejs: %v", err)
 	}

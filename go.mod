@@ -2,7 +2,7 @@ module github.com/debdutdeb/node-proxy
 
 go 1.21.5
 
-require github.com/debdutdeb/gopark v0.0.0-20240206082208-8bbe63b9e014
+require github.com/debdutdeb/gopark v0.0.0-20240320085805-c715fabf8431
 
 require (
 	github.com/Masterminds/semver/v3 v3.2.1 // indirect

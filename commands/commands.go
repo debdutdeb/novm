@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/user"
 	"path/filepath"
 
 	"github.com/debdutdeb/node-proxy/cmd"
+	"github.com/debdutdeb/node-proxy/common"
 	"github.com/debdutdeb/node-proxy/pkg"
 
 	"golang.org/x/mod/semver"
@@ -15,10 +15,8 @@ import (
 
 var NodeJsVersion string = ""
 
-const NOVM_DIR = ".novm"
-
 func init() {
-	if filepath.Base(os.Args[0]) == "novm" {
+	if filepath.Base(os.Args[0]) == common.BIN_NAME {
 		return
 	}
 
@@ -44,14 +42,12 @@ func init() {
 func Run() error {
 	var err error
 
-	u, err := user.Current()
+	root, err := common.RootDir()
 	if err != nil {
-		log.Fatalf("failed to detect current user: %v", err)
+		return err
 	}
 
-	root := filepath.Join(u.HomeDir, NOVM_DIR)
-
-	if filepath.Base(os.Args[0]) == "novm" {
+	if filepath.Base(os.Args[0]) == common.BIN_NAME {
 		return cmd.Root(root).Execute()
 	}
 

@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"log"
 	"os"
@@ -11,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"golang.org/x/mod/semver"
 )
 
 func installCommand(rootDir string) *cobra.Command {
@@ -25,39 +23,6 @@ func installCommand(rootDir string) *cobra.Command {
 	}
 
 	return cmd
-}
-
-func findMaxInstalledVersion(rootDir string) (string, error) {
-	entries, err := os.ReadDir(rootDir)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return "latest", nil
-		}
-
-		return "", err
-	}
-
-	if len(entries) == 0 {
-		return "latest", nil
-	}
-
-	if !semver.IsValid(entries[0].Name()) {
-		return "", fmt.Errorf("root install directory seems to be polluted with files unknown %s", entries[0].Name())
-	}
-
-	max := entries[0].Name()
-
-	for _, entry := range entries[1:] {
-		if !semver.IsValid(entry.Name()) {
-			return "", fmt.Errorf("root install directory seems to be polluted with files unknown %s", entry.Name())
-		}
-
-		if semver.Compare(entry.Name(), max) == 1 {
-			max = entry.Name()
-		}
-	}
-
-	return max, nil
 }
 
 func install(rootDir string) error {
