@@ -1,3 +1,5 @@
+github.com/Masterminds/semver/v3 v3.2.1 h1:RN9w6+7QoMeJVGyfmbcgs28Br8cvmnucEXnY0rYXWg0=
+github.com/Masterminds/semver/v3 v3.2.1/go.mod h1:qvl/7zhW3nngYb5+80sSMF+FG2BjYrf8m9wsX0PNOMQ=
 github.com/debdutdeb/gopark v0.0.0-20240206082208-8bbe63b9e014 h1:CeMnfg9HQ/zzWv6d6bJitfxGMBc8TvkITGbGrsRkB/c=
 github.com/debdutdeb/gopark v0.0.0-20240206082208-8bbe63b9e014/go.mod h1:wFBbo16ZeqbuiP/1W+98R8m2vSzemWcnbv8Yh79JJ+w=
 golang.org/x/mod v0.14.0 h1:dGoOF9QVLYng8IHTm7BAyWqCqSheQ5pYWGhzW00YJr0=

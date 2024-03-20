@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -16,58 +15,29 @@ import (
 	"golang.org/x/mod/semver"
 )
 
-type packageJson struct {
-	Engines struct {
-		Node string `json:"node"`
-	} `json:"engines"`
-}
-
 var NodeJsVersion string = ""
 
 func init() {
-	if v := os.Getenv("NP_NODE_VERSION"); v != "" {
-		NodeJsVersion = v
+	if os.Args[0] == "node-proxy" {
 		return
 	}
 
-	if s, err := os.Stat("package.json"); err == nil && !s.IsDir() {
-		var p packageJson
-		f, err := os.Open("package.json")
-		if err != nil {
-			log.Fatalf("failed to open package.json: %v", err)
-		}
-
-		defer f.Close()
-
-		err = json.NewDecoder(f).Decode(&p)
-		if err != nil {
-			log.Fatalf("failed to read package.json: %v", err)
-		}
-
-		NodeJsVersion = p.Engines.Node
-
-		return
+	sources := source{
+		"environment":  sourceEnvironment, // NP_NODE_VERSION
+		"package.json": sourcePackageJson, // engines, volta
+		"nvmrc":        sourceNvmrc,
 	}
 
-	if s, err := os.Stat(".nvmrc"); err == nil && !s.IsDir() {
-		// only supports the version
-		f, err := os.Open(".nvmrc")
+	for sourceName, sourceFn := range sources {
+		v, err := sourceFn()
+		if v != "" {
+			NodeJsVersion = v
+			return
+		}
+
 		if err != nil {
-			log.Fatalf("failed to read .nvmrc: %v", err)
+			log.Println("unable to parse source:", sourceName, "error:", err)
 		}
-
-		defer f.Close()
-
-		b, err := io.ReadAll(f)
-		if err != nil {
-			log.Fatalf("failed to read .nvmrc: %v", err)
-		}
-
-		if b[len(b)-1] == 10 {
-			b = b[:len(b)-1]
-		}
-
-		NodeJsVersion = string(b)
 	}
 }
 
@@ -94,14 +64,15 @@ func main() {
 		return
 	}
 
-	root = filepath.Join(root, "versions")
-
 	if NodeJsVersion == "" {
 		log.Println("no nodejs version detected from sources, using latest installed")
-		NodeJsVersion, err = findMaxInstalledVersion(root)
+
+		NodeJsVersion, err = findMaxInstalledVersion(filepath.Join(root, "versions"))
 		if err != nil {
 			log.Fatalf("failed to detect current nodejs version: %v", err)
 		}
+
+		log.Println("installing nodejs:", NodeJsVersion)
 	}
 	n, err := pkg.NewNodeManager(false, NodeJsVersion, root)
 	if err != nil {
@@ -130,11 +101,15 @@ func main() {
 func findMaxInstalledVersion(rootDir string) (string, error) {
 	entries, err := os.ReadDir(rootDir)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return "latest", nil
+		}
+
 		return "", err
 	}
 
 	if len(entries) == 0 {
-		return "", fmt.Errorf("no nodejs versions found")
+		return "latest", nil
 	}
 
 	if !semver.IsValid(entries[0].Name()) {
