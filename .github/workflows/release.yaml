@@ -23,7 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - run: |
-          GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} go build -o -ldflags="-X 'github.com/debdutdeb/node-proxy/versions.Version=${{inputs.tag}}' -X 'github.com/debdutdeb/node-proxy/versions.BuildTime=$(date -u)' -X 'github.com/debdutdeb/node-proxy/versions.GitCommit=${{github.sha}}'" novm-${{matrix.os}}-${{matrix.arch}} .
+          GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} go build -ldflags="-X 'github.com/debdutdeb/node-proxy/versions.Version=${{inputs.tag}}' -X 'github.com/debdutdeb/node-proxy/versions.BuildTime=$(date -u)' -X 'github.com/debdutdeb/node-proxy/versions.GitCommit=${{github.sha}}'" -o novm-${{matrix.os}}-${{matrix.arch}} .
         shell: bash
 
       - uses: softprops/action-gh-release@v1
