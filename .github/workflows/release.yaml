@@ -1,0 +1,39 @@
+name: Trigger release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        required: true
+        description: release version
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        # go away windows
+        os:
+          - darwin
+          - linux
+        arch:
+          - amd64
+          - arm64
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} go build -o -ldflags="-X 'github.com/debdutdeb/node-proxy/versions.Version=${{inputs.tag}}' -X 'github.com/debdutdeb/node-proxy/versions.BuildTime=$(date -u)' -X 'github.com/debdutdeb/node-proxy/versions.GitCommit=${{github.sha}}'" novm-${{matrix.os}}-${{matrix.arch}} .
+        shell: bash
+
+      - uses: softprops/action-gh-release@v1
+        with:
+          files: ${{github.workspace}}/novm-${{matrix.os}}-${{matrix.arch}}
+          prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+          name: ${{ inputs.tag }}
+          tag_name: ${{ inputs.tag }}
+          draft: false
+          fail_on_unmatched_files: true
+          target_commitish: develop
+          generate_release_notes: true
