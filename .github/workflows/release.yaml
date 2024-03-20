@@ -6,6 +6,8 @@ on:
       tag:
         required: true
         description: release version
+      generate-changelogs:
+
 
 permissions:
   contents: write
@@ -39,4 +41,4 @@ jobs:
           draft: false
           fail_on_unmatched_files: true
           target_commitish: develop
-          generate_release_notes: true
+          generate_release_notes: ${{ inputs.generate-changelogs }}
