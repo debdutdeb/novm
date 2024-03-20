@@ -16,10 +16,10 @@ import (
 
 	semverv3 "github.com/Masterminds/semver/v3"
 	gopark "github.com/debdutdeb/gopark/pkg/utils"
-	"golang.org/x/mod/semver"
 )
 
 var ErrNodeNotInstalled = errors.New("nodejs not installed")
+var ErrNodeVersionNotFound = errors.New("nodejs version not found")
 
 // the node version manager
 
@@ -34,7 +34,7 @@ type nCacheItem struct {
 type nCache []nCacheItem
 
 type N struct {
-	version     string
+	versionStr  string
 	arch        string
 	rootDir     string
 	installDir  string
@@ -44,32 +44,13 @@ type N struct {
 	global  bool
 
 	cache nCache
+
+	version SemverManager
 }
 
 type NpmRunner interface {
 	CaptureOutput(args ...string) ([]byte, []byte, error)
 	Run(args ...string) error
-}
-
-func getNodeJsArch(version string) string {
-	if runtime.GOARCH == "amd64" {
-		return "x64"
-	}
-
-	if runtime.GOOS == "darwin" && semver.IsValid(version) && semver.Compare(version, "v16.0.0") == -1 {
-		return "x64"
-	}
-
-	return runtime.GOARCH
-}
-
-func isValidVersion(version string) bool {
-	switch version {
-	case "latest", "lts":
-		return true
-	default:
-		return semver.IsValid(version)
-	}
 }
 
 func NewNodeManager(global bool, version string, rootDir string) (*N, error) {
@@ -80,45 +61,35 @@ func NewNodeManager(global bool, version string, rootDir string) (*N, error) {
 
 	var err error
 
-	if !isValidVersion(version) {
-		return nil, fmt.Errorf("invalid version detected: %s", version)
-	}
-
 	if err := n.initCache(); err != nil {
 		return nil, err
 	}
 
-	n.arch = getNodeJsArch(version)
+	if n.version, err = n.parseVersion(version); err != nil {
+		return nil, err
+	}
+
+	n.arch = n.getNodeJsArch()
 
 	switch version {
 	case "latest":
-		if n.version, err = n.findLatestVersion(false); err != nil {
+		if n.versionStr, err = n.findLatestVersion(false); err != nil {
 			return nil, err
 		}
 	case "lts":
-		if n.version, err = n.findLatestVersion(true); err != nil {
+		if n.versionStr, err = n.findLatestVersion(true); err != nil {
 			return nil, err
 		}
 	default:
-		var semverManager SemverManager
-
-		semverManager, errVersion := semverv3.NewVersion(version)
-		if errVersion != nil {
-			c, errConstraints := semverv3.NewConstraint(version)
-			if errConstraints != nil {
-				return nil, fmt.Errorf("failed to parse version, neither a semver nor constraint: %w, %w", errVersion, errConstraints)
-			}
-
-			semverManager = semverv3Constraints(*c)
-		}
+		found := false
 
 		var releases []nCacheItem
 
 		for _, release := range n.cache {
-			c := semverManager.Compare(semverv3.MustParse(release.Version))
-			if c == 3 {
-				break
-			}
+			c := n.version.Compare(semverv3.MustParse(release.Version))
+			// if c == 3 {
+			// 	break
+			// }
 
 			if c == 0 {
 				releases = append(releases, release)
@@ -137,15 +108,13 @@ func NewNodeManager(global bool, version string, rootDir string) (*N, error) {
 			return nil, fmt.Errorf("no release found for version: \"%s\"", version)
 		}
 
-		found := false
-
 		archiveType := n.getArchiveType()
 
 	loop:
 		for _, release := range releases {
 			for _, thisType := range release.Files {
 				if thisType == archiveType {
-					n.version = release.Version
+					n.versionStr = release.Version
 
 					found = true
 
@@ -155,12 +124,12 @@ func NewNodeManager(global bool, version string, rootDir string) (*N, error) {
 		}
 
 		if !found {
-			return nil, fmt.Errorf("version %s not found for file %s", version, archiveType)
+			return nil, fmt.Errorf("version %s not found for file %s, err: %w", version, archiveType, ErrNodeVersionNotFound)
 		}
 	}
 
-	n.installDir = filepath.Join(rootDir, "versions", n.version, runtime.GOOS, n.arch)
-	n.environment = append(os.Environ(), "NP_NODE_VERSION="+n.version) // make sure we continue using this version on every nested call (like lifecycle scripts) in case source isn't environment variable
+	n.installDir = filepath.Join(rootDir, "versions", n.versionStr, runtime.GOOS, n.arch)
+	n.environment = append(os.Environ(), "NP_NODE_VERSION="+n.versionStr) // make sure we continue using this version on every nested call (like lifecycle scripts) in case source isn't environment variable
 
 	if n.global {
 		binPath, err := exec.LookPath("node")
@@ -182,6 +151,46 @@ func NewNodeManager(global bool, version string, rootDir string) (*N, error) {
 	n.environment = append([]string{fmt.Sprintf("PATH=%s:%s", filepath.Dir(n.binPath), path)}, n.environment...)
 
 	return n, nil
+}
+
+func (n *N) parseVersion(version string) (SemverManager, error) {
+	var semverManager SemverManager
+
+	semverManager, err1 := semverv3.NewVersion(version)
+	if err1 == nil {
+		return semverManager, nil
+	}
+
+	c, err2 := semverv3.NewConstraint(version)
+	if err2 == nil {
+		return semverv3Constraints(*c), nil
+	}
+
+	return nil, fmt.Errorf("failed to parse version, neither a semver nor constraint: %w, %w", err1, err2)
+}
+
+func (n *N) getNodeJsArch() string {
+	if runtime.GOARCH == "amd64" {
+		return "x64"
+	}
+
+	if n.versionStr == "latest" || n.versionStr == "lts" {
+		return runtime.GOOS
+	}
+
+	if runtime.GOOS == "darwin" {
+		if c := n.version.Compare(semverv3.MustParse("16.0.0")); c == -1 || c == 3 {
+			return "x64"
+		}
+	}
+
+	return runtime.GOARCH
+}
+
+// SetBinaryArchX86 is used for apple m-series/arm series machines
+// v < 16 doesn't have arm binaries
+func (n *N) SetBinaryArchX86() {
+	n.arch = "x64"
 }
 
 func (n *N) getArchiveType() string {
@@ -240,7 +249,7 @@ func (n *N) Install() error {
 
 	archivePath := filepath.Join(tmpDir, filename)
 
-	err = gopark.DownloadWithProgressBar("Node "+n.version, url, archivePath)
+	err = gopark.DownloadWithProgressBar("Node "+n.versionStr, url, archivePath)
 	if err != nil {
 		return err
 	}
@@ -279,7 +288,7 @@ func (n *N) Install() error {
 }
 
 func (n *N) EnsureInstalled() error {
-	if n.version == n.Version() {
+	if n.versionStr == n.Version() {
 		return nil
 	}
 
@@ -334,8 +343,8 @@ func (n *N) Version() string {
 }
 
 func (n *N) _assets() (url string, filename string) {
-	filename = fmt.Sprintf("node-%s-%s-%s.tar.xz", n.version, runtime.GOOS, n.arch)
-	url = fmt.Sprintf("https://nodejs.org/download/release/%s/%s", n.version, filename)
+	filename = fmt.Sprintf("node-%s-%s-%s.tar.xz", n.versionStr, runtime.GOOS, n.arch)
+	url = fmt.Sprintf("https://nodejs.org/download/release/%s/%s", n.versionStr, filename)
 	return
 }
 
