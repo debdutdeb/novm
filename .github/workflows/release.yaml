@@ -29,7 +29,7 @@ jobs:
           GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} go build -ldflags="-X 'github.com/debdutdeb/node-proxy/versions.Version=${{inputs.tag}}' -X 'github.com/debdutdeb/node-proxy/versions.BuildTime=$(date -u)' -X 'github.com/debdutdeb/node-proxy/versions.GitCommit=${{github.sha}}'" -o novm-${{matrix.os}}-${{matrix.arch}} .
         shell: bash
 
-      - uses: softprops/action-gh-release@v1
+      - uses: softprops/action-gh-release@v2
         with:
           files: novm-${{matrix.os}}-${{matrix.arch}}
           prerelease: false
