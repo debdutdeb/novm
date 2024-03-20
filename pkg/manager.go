@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	semverv3 "github.com/Masterminds/semver/v3"
 	gopark "github.com/debdutdeb/gopark/pkg/utils"
 	"golang.org/x/mod/semver"
 )
@@ -99,22 +100,51 @@ func NewNodeManager(global bool, version string, rootDir string) (*N, error) {
 			return nil, err
 		}
 	default:
-		if version[0] != 'v' {
-			version = "v" + version
+		var semverManager SemverManager
+
+		semverManager, errVersion := semverv3.NewVersion(version)
+		if errVersion != nil {
+			c, errConstraints := semverv3.NewConstraint(version)
+			if errConstraints != nil {
+				return nil, fmt.Errorf("failed to parse version, neither a semver nor constraint: %w, %w", errVersion, errConstraints)
+			}
+
+			semverManager = semverv3Constraints(*c)
 		}
 
-		archiveType := n.getArchiveType()
+		var releases []nCacheItem
+
+		for _, release := range n.cache {
+			c := semverManager.Compare(semverv3.MustParse(release.Version))
+			if c == 3 {
+				break
+			}
+
+			if c == 0 {
+				releases = append(releases, release)
+
+				break
+			}
+
+			if c == 2 {
+				releases = append(releases, release)
+
+				continue
+			}
+		}
+
+		if len(releases) == 0 {
+			return nil, fmt.Errorf("no release found for version: \"%s\"", version)
+		}
 
 		found := false
 
-	loop:
-		for _, release := range n.cache {
-			if release.Version != version {
-				continue
-			}
+		archiveType := n.getArchiveType()
 
-			for _, fileType := range release.Files {
-				if fileType == archiveType {
+	loop:
+		for _, release := range releases {
+			for _, thisType := range release.Files {
+				if thisType == archiveType {
 					n.version = release.Version
 
 					found = true
