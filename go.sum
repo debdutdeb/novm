@@ -3,6 +3,8 @@ github.com/Masterminds/semver/v3 v3.2.1/go.mod h1:qvl/7zhW3nngYb5+80sSMF+FG2BjYr
 github.com/cpuguy83/go-md2man/v2 v2.0.3/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
 github.com/debdutdeb/gopark v0.0.0-20240206082208-8bbe63b9e014 h1:CeMnfg9HQ/zzWv6d6bJitfxGMBc8TvkITGbGrsRkB/c=
 github.com/debdutdeb/gopark v0.0.0-20240206082208-8bbe63b9e014/go.mod h1:wFBbo16ZeqbuiP/1W+98R8m2vSzemWcnbv8Yh79JJ+w=
+github.com/debdutdeb/gopark v0.0.0-20240320085805-c715fabf8431 h1:VQMJr74nd0vBVZdRl/xHhwp6Hzq+qS8MFy8qFIK0Ckc=
+github.com/debdutdeb/gopark v0.0.0-20240320085805-c715fabf8431/go.mod h1:wFBbo16ZeqbuiP/1W+98R8m2vSzemWcnbv8Yh79JJ+w=
 github.com/inconshreveable/mousetrap v1.1.0 h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2s0bqwp9tc8=
 github.com/inconshreveable/mousetrap v1.1.0/go.mod h1:vpF70FUmC8bwa3OWnCshd2FqLfsEA9PFc4w1p2J65bw=
 github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=

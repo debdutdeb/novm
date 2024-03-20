@@ -9,8 +9,12 @@ import (
 var NodeJsVersion string = ""
 
 func main() {
+	cont, done := startCheckUpdate()
+
 	if err := commands.Run(); err != nil {
 		log.Fatal(err)
 	}
-}
 
+	cont <- true
+	<-done
+}
