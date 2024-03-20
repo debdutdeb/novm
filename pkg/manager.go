@@ -50,94 +50,83 @@ type NpmRunner interface {
 	Run(args ...string) error
 }
 
+func getNodeJsArch(version string) string {
+	if runtime.GOARCH == "amd64" {
+		return "x64"
+	}
+
+	if runtime.GOOS == "darwin" && semver.IsValid(version) && semver.Compare(version, "v16.0.0") == -1 {
+		return "x64"
+	}
+
+	return runtime.GOARCH
+}
+
+func isValidVersion(version string) bool {
+	switch version {
+	case "latest", "lts":
+		return true
+	default:
+		return semver.IsValid(version)
+	}
+}
+
 func NewNodeManager(global bool, version string, rootDir string) (*N, error) {
 	n := &N{
 		global:  global,
-		version: version,
 		rootDir: rootDir,
+	}
+
+	var err error
+
+	if !isValidVersion(version) {
+		return nil, fmt.Errorf("invalid version detected: %s", version)
 	}
 
 	if err := n.initCache(); err != nil {
 		return nil, err
 	}
 
-	if runtime.GOARCH == "amd64" ||
-		(runtime.GOOS == "darwin" &&
-			semver.IsValid(n.version) &&
-			semver.Compare(n.version, "v16.0.0") == -1) {
-		n.arch = "x64"
-	} else {
-		// TODO is this right? given how x64 differs
-		n.arch = runtime.GOARCH
-	}
-
-	// filetype is what kind of download artifact I am looking for
-	myFileType := ""
-
-	if runtime.GOOS == "darwin" {
-		myFileType = "osx-" + n.arch + "-tar"
-	} else {
-		myFileType = runtime.GOOS + "-" + runtime.GOARCH
-	}
+	n.arch = getNodeJsArch(version)
 
 	switch version {
 	case "latest":
-	latest_release:
-		for _, release := range n.cache {
-			for _, fileType := range release.Files {
-				if fileType == myFileType {
-					n.version = release.Version
-					break latest_release
-				}
-			}
+		if n.version, err = n.findLatestVersion(false); err != nil {
+			return nil, err
 		}
 	case "lts":
-	lts_release:
-		for _, release := range n.cache {
-			_, ok := release.Lts.(string)
-			if !ok {
-				continue
-			}
-
-			for _, fileType := range release.Files {
-				if fileType == myFileType {
-					n.version = release.Version
-					break lts_release
-				}
-			}
+		if n.version, err = n.findLatestVersion(true); err != nil {
+			return nil, err
 		}
 	default:
 		if version[0] != 'v' {
 			version = "v" + version
 		}
 
+		archiveType := n.getArchiveType()
+
 		found := false
 
+	loop:
 		for _, release := range n.cache {
 			if release.Version != version {
 				continue
 			}
 
-			found = true
-
 			for _, fileType := range release.Files {
-				if fileType == myFileType {
+				if fileType == archiveType {
 					n.version = release.Version
+
+					found = true
+
+					break loop
 				}
 			}
-
-			if found && n.version == "" {
-				return nil, fmt.Errorf("given version not found for your current platform")
-			} else if !found {
-				return nil, fmt.Errorf("invalid nodejs version")
-			}
-
-			break
 		}
-	}
 
-	if n.version == "" {
-		return nil, fmt.Errorf("failed to find the latest release for your platform")
+		if !found {
+			return nil, fmt.Errorf("version %s not found for file %s", version, archiveType)
+		}
 	}
 
 	n.installDir = filepath.Join(rootDir, "versions", n.version, runtime.GOOS, n.arch)
@@ -163,6 +152,46 @@ func NewNodeManager(global bool, version string, rootDir string) (*N, error) {
 	n.environment = append([]string{fmt.Sprintf("PATH=%s:%s", filepath.Dir(n.binPath), path)}, n.environment...)
 
 	return n, nil
+}
+
+func (n *N) getArchiveType() string {
+	finalArch := n.arch
+
+	if runtime.GOOS == "linux" {
+		return "linux-" + finalArch
+	}
+
+	if runtime.GOOS == "darwin" {
+		return "osx-" + finalArch + "-tar"
+	}
+
+	return runtime.GOOS + "-" + runtime.GOARCH
+}
+
+func (n *N) findLatestVersion(lts bool) (string, error) {
+	fileType := n.getArchiveType()
+
+	isLts := func(release *nCacheItem) bool {
+		if _, ok := release.Lts.(string); !ok {
+			return false
+		}
+
+		return true
+	}
+
+	for _, release := range n.cache {
+		if lts && !isLts(&release) {
+			continue
+		}
+
+		for _, file := range release.Files {
+			if file == fileType {
+				return release.Version, nil
+			}
+		}
+	}
+
+	return "", fmt.Errorf("failed to find latest version for file %s", fileType)
 }
 
 func (n *N) Npm() NpmRunner {
