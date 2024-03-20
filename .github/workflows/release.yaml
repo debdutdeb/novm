@@ -40,5 +40,5 @@ jobs:
           tag_name: ${{ inputs.tag }}
           draft: false
           fail_on_unmatched_files: true
-          target_commitish: develop
+          target_commitish: ${{ github.sha }}
           generate_release_notes: ${{ inputs.generate-changelogs }}
