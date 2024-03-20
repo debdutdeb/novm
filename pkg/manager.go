@@ -179,7 +179,7 @@ func (n *N) getNodeJsArch() string {
 	}
 
 	if runtime.GOOS == "darwin" {
-		if c := n.version.Compare(semverv3.MustParse("16.0.0")); c == -1 || c == 3 {
+		if n.version.Compare(semverv3.MustParse("16.0.0")) == -1 {
 			return "x64"
 		}
 	}
