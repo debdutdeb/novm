@@ -6,8 +6,10 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"runtime"
+	"syscall"
 
 	"golang.org/x/mod/semver"
 
@@ -123,11 +125,31 @@ func startCheckUpdate() (chan bool, chan bool) {
 				}
 			}
 
+		} else {
+			<-cont // consume
+			log.Println("no new novm updates found.")
+			return
 		}
+
+		// we ignore sigint and sigterm here to not lose the binary
+
+		sig := make(chan os.Signal, 1)
+
+		signal.Notify(sig, syscall.SIGINT, syscall.SIGHUP, syscall.SIGTERM, syscall.SIGQUIT)
+
+		go func() {
+			for {
+				<-sig
+
+				log.Println("ignoring signal since novm is still updating")
+			}
+		}()
 
 		<-cont // upgrade the binary
 
 		// we expect current binary to be a symlink
+
+		log.Printf("Updating novm to %s", release.Tag)
 
 		root, _ := common.RootDir()
 
