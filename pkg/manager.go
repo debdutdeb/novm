@@ -46,6 +46,8 @@ type N struct {
 	cache nCache
 
 	version SemverManager
+
+	args []string
 }
 
 type NpmRunner interface {
@@ -250,6 +252,7 @@ func (n *N) findLatestVersion(lts bool) (string, error) {
 func (n *N) Npm() NpmRunner {
 	npm := *n
 	npm.binPath = filepath.Join(filepath.Dir(n.binPath), "npm")
+	npm.args = []string{"--scripts-prepend-node-path", n.binPath}
 	return &npm
 }
 
@@ -310,7 +313,7 @@ func (n *N) EnsureInstalled() error {
 }
 
 func (n *N) Run(args ...string) (err error) {
-	cmd := exec.Command(n.binPath, args...)
+	cmd := exec.Command(n.binPath, append(args, n.args...)...)
 
 	// let the command take over
 	cmd.Stdin = os.Stdin
