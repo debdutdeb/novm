@@ -175,11 +175,25 @@ func (n *N) getNodeJsArch() string {
 	}
 
 	if n.versionStr == "latest" || n.versionStr == "lts" {
-		return runtime.GOOS
+		return runtime.GOARCH
 	}
 
+	// TODO: try to remove these type assertions
 	if runtime.GOOS == "darwin" {
-		if n.version.Compare(semverv3.MustParse("16.0.0")) == -1 {
+		c, _ := semverv3.NewConstraint("<16.0.0")
+
+		// if source has a constraint set, unfortunately for now
+		// get the actual typed variable out and use that
+		constraint, ok := n.version.(semverv3Constraints)
+		if ok {
+			if semverv3.Constraints(constraint).CheckConstraints(c) {
+				return "x64"
+			}
+
+			return runtime.GOARCH
+		}
+
+		if c.Check(n.version.(*semverv3.Version)) {
 			return "x64"
 		}
 	}
