@@ -6,8 +6,6 @@ import (
 	"github.com/debdutdeb/node-proxy/commands"
 )
 
-var NodeJsVersion string = ""
-
 func main() {
 	cont, done := startCheckUpdate()
 

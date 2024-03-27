@@ -47,7 +47,7 @@ func Run() error {
 		return err
 	}
 
-	if filepath.Base(os.Args[0]) == common.BIN_NAME {
+	if os.Getenv("NOVM_WAKE") != "" {
 		return cmd.Root(root).Execute()
 	}
 
@@ -70,7 +70,7 @@ func Run() error {
 		return fmt.Errorf("failed to install node version %w", err)
 	}
 
-	if os.Args[0] == "npm" {
+	if filepath.Base(os.Args[0]) == "npm" {
 		return n.Npm().Run(os.Args[1:]...)
 	}
 

@@ -10,6 +10,10 @@ import (
 type source map[string]func() (string, error)
 
 func sourceEnvironment() (string, error) {
+	if version := os.Getenv("NODE_VERSION"); version != "" {
+		return version, nil
+	}
+
 	return os.Getenv("NP_NODE_VERSION"), nil
 }
 
@@ -76,4 +80,3 @@ func sourceNvmrc() (string, error) {
 
 	return string(b), nil
 }
-
