@@ -55,8 +55,9 @@ type NpmRunner interface {
 
 func NewNodeManager(global bool, version string, rootDir string) (*N, error) {
 	n := &N{
-		global:  global,
-		rootDir: rootDir,
+		global:     global,
+		rootDir:    rootDir,
+		versionStr: version,
 	}
 
 	var err error
@@ -65,22 +66,26 @@ func NewNodeManager(global bool, version string, rootDir string) (*N, error) {
 		return nil, err
 	}
 
-	if n.version, err = n.parseVersion(version); err != nil {
-		return nil, err
-	}
-
-	n.arch = n.getNodeJsArch()
-
 	switch version {
 	case "latest":
+		n.arch = n.getNodeJsArch()
+
 		if n.versionStr, err = n.findLatestVersion(false); err != nil {
 			return nil, err
 		}
 	case "lts":
+		n.arch = n.getNodeJsArch()
+
 		if n.versionStr, err = n.findLatestVersion(true); err != nil {
 			return nil, err
 		}
 	default:
+		if n.version, err = n.parseVersion(version); err != nil {
+			return nil, err
+		}
+
+		n.arch = n.getNodeJsArch()
+
 		found := false
 
 		var releases []nCacheItem

@@ -2,10 +2,12 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"os/signal"
 	"path/filepath"
 	"runtime"
@@ -34,7 +36,7 @@ func startCheckUpdate() (chan bool, chan bool) {
 	done := make(chan bool)
 
 	// don't run on novm call
-	if filepath.Base(os.Args[0]) == common.BIN_NAME {
+	if os.Getenv("NOVM_WAKE") != "" {
 		// comsume the channel
 		go func() {
 			<-cont
@@ -151,11 +153,7 @@ func startCheckUpdate() (chan bool, chan bool) {
 
 		log.Printf("Updating novm to %s", release.Tag)
 
-		root, _ := common.RootDir()
-
-		bin := filepath.Join(root, "bin", "node")
-
-		novmBin, err := filepath.EvalSymlinks(bin)
+		bin, err := currentExecutable()
 		if err != nil {
 			log.Fatalf("failed to get novm binary to upgrade: %v", err)
 		}
@@ -165,19 +163,28 @@ func startCheckUpdate() (chan bool, chan bool) {
 			log.Fatalf("failed to updated binary (%s): %v", tmpDownload, err)
 		}
 
-		dst, err := os.OpenFile(novmBin, os.O_WRONLY|os.O_TRUNC, 0750)
+		dst, err := os.OpenFile(bin, os.O_WRONLY|os.O_TRUNC, 0750)
 		if err != nil {
-			log.Fatalf("failed to updated binary (%s): %v", novmBin, err)
+			log.Fatalf("failed to updated binary (%s): %v", bin, err)
 		}
 
 		io.Copy(dst, src)
-
-		os.Remove(bin)
-
-		if err := os.Link(novmBin, bin); err != nil {
-			log.Fatalf("failed to install novm: %v\ntry running `novm install` manually", err)
-		}
 	}()
 
 	return cont, done
+}
+
+// TODO aggregate maybe
+func currentExecutable() (string, error) {
+	path, err1 := os.Executable()
+	if err1 == nil {
+		return filepath.EvalSymlinks(path)
+	}
+
+	path, err2 := exec.LookPath("node")
+	if err2 == nil {
+		return filepath.EvalSymlinks(path)
+	}
+
+	return "", fmt.Errorf("%w, %w", err1, err2)
 }

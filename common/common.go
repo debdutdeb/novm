@@ -13,7 +13,7 @@ const BIN_NAME = "novm"
 func rootDir() func() (string, error) {
 	u, err := user.Current()
 	if err != nil {
-		log.Fatalf("failed to detect current user: %w", err)
+		log.Fatalf("failed to detect current user: %v", err)
 	}
 
 	root := filepath.Join(u.HomeDir, NOVM_DIR)

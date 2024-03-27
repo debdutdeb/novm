@@ -2,6 +2,7 @@
 
 node
 node-proxy
+npm
 
 .nvmrc
 novm
