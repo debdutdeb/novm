@@ -50,7 +50,7 @@ func sourcePackageJson() (string, error) {
 	}
 
 	if p.Volta.Node != "" {
-		return p.Engines.Node, nil
+		return p.Volta.Node, nil
 	}
 
 	return "", nil
