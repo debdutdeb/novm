@@ -158,17 +158,9 @@ func startCheckUpdate() (chan bool, chan bool) {
 			log.Fatalf("failed to get novm binary to upgrade: %v", err)
 		}
 
-		src, err := os.Open(tmpDownload)
-		if err != nil {
-			log.Fatalf("failed to updated binary (%s): %v", tmpDownload, err)
+		if err := os.Rename(tmpDownload, bin); err != nil {
+			log.Fatalf("failed to move download to bin path: %v", err)
 		}
-
-		dst, err := os.OpenFile(bin, os.O_WRONLY|os.O_TRUNC, 0750)
-		if err != nil {
-			log.Fatalf("failed to updated binary (%s): %v", bin, err)
-		}
-
-		io.Copy(dst, src)
 	}()
 
 	return cont, done
