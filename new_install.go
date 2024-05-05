@@ -5,9 +5,11 @@ does some new install stuff
 */
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -34,11 +36,30 @@ func handleNewInstall() error {
 
 	me := os.Args[0]
 
-	switch bin := filepath.Base(me); bin {
+	bin := filepath.Base(me)
+
+	var dir string
+
+	path, err := exec.LookPath(me) // for "path", this will always error
+	if err == nil {
+		dir = filepath.Dir(path)
+	} else {
+		dir = filepath.Dir(me)
+	}
+
+	switch bin {
 	case "node":
-		return os.Symlink(me, filepath.Join(filepath.Dir(me), "npm"))
+		if err := os.Symlink(me, filepath.Join(dir, "npm")); errors.Is(err, os.ErrExist) {
+			return nil
+		} else {
+			return err
+		}
 	case "npm":
-		return os.Symlink(me, filepath.Join(filepath.Dir(me), "node"))
+		if err := os.Symlink(me, filepath.Join(dir, "node")); errors.Is(err, os.ErrExist) {
+			return nil
+		} else {
+			return err
+		}
 	default:
 		return fmt.Errorf("what binary is this? I should either be node or npm, but seems like I am %s", bin)
 	}

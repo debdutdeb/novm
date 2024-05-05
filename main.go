@@ -8,7 +8,7 @@ import (
 
 func main() {
 	if err := handleNewInstall(); err != nil {
-		log.Fatal("failed to run fresh install tasks", err)
+		log.Fatal("failed to run fresh install tasks: ", err)
 	}
 
 	cont, done := startCheckUpdate()

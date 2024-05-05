@@ -11,16 +11,28 @@ Only support linux and macos, see [windows support](#windows-support).
 Download as a node binary
 
 ```sh
-curl -L https://github.com/debdutdeb/novm/releases/latest/download/novm-$(uname -s | tr [[:upper:]] [[:lower:]])-$(uname -m) -o /usr/local/bin/node
+curl -L https://github.com/debdutdeb/novm/releases/latest/download/novm-$(uname -s | tr '[[:upper:]]' '[[:lower:]]')-$(uname -m) -o ~/.local/bin/node && chmod +x ~/.local/bin/node
 ```
 
 Or, as an npm binary
 
 ```sh
-curl -L https://github.com/debdutdeb/novm/releases/latest/download/novm-$(uname -s | tr [[:upper:]] [[:lower:]])-$(uname -m) -o /usr/local/bin/npm
+curl -L https://github.com/debdutdeb/novm/releases/latest/download/novm-$(uname -s | tr '[[:upper:]]' '[[:lower:]]')-$(uname -m) -o ~/.local/bin/npm && chmod +x ~/.local/bin/npm
 ```
 
 Either way, once run the first time, it will link itself to the other binary automatically.
+
+I highly recommend installing in a folder that doesn't require sudo. Else it'll try to install first version onto `/root` as linking won't work otherwise.
+
+Or, link manually before running either of the commands,
+
+```
+sudo ln -s $(which node) $(dirname $(which node))/npm
+# or
+sudo ln -s $(which npm) $(dirname $(which npm))/node
+```
+
+If at fresh install symlink fails, novm won't try again. This is to allow manual symlinking.
 
 Make sure you add `$HOME/.novm/bin` to your `PATH`. More [here](#install-directories).
 
