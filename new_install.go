@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/debdutdeb/node-proxy/common"
 	"github.com/debdutdeb/node-proxy/state"
 )
 
@@ -59,7 +60,7 @@ func setnpmPrefix() error {
 
 	for i, line := range lines {
 		if len(line) >= 7 && line[:7] == "prefix=" {
-			lines[i] = "prefix=" + filepath.Join(os.Getenv("HOME"), ".node-proxy")
+			lines[i] = "prefix=" + filepath.Join(os.Getenv("HOME"), common.NOVM_DIR)
 			break
 		}
 	}
