@@ -17,6 +17,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	cont <- true
+	cont <- struct{}{}
 	<-done
 }

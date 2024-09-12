@@ -30,16 +30,21 @@ type asset struct {
 	Url  string `json:"browser_download_url"`
 }
 
-func startCheckUpdate() (chan bool, chan bool) {
-	cont := make(chan bool)
-	done := make(chan bool)
+func startCheckUpdate() (cont chan struct{}, done chan struct{}) {
+	cont = make(chan struct{}, 1)
+	done = make(chan struct{}, 1)
+
+	if versions.Version == "develop" {
+		log.Printf("ignoring update check for development build\n")
+		done<-struct{}{}
+		return
+	}
 
 	// don't run on novm call
 	if os.Getenv("NOVM_WAKE") != "" {
 		// comsume the channel
 		go func() {
-			<-cont
-			done <- true
+			done <- struct{}{}
 		}()
 
 		return cont, done
@@ -47,7 +52,7 @@ func startCheckUpdate() (chan bool, chan bool) {
 
 	go func() {
 		defer func() {
-			done <- true
+			done <- struct{}{}
 		}()
 
 		var (
@@ -162,7 +167,7 @@ func startCheckUpdate() (chan bool, chan bool) {
 		}
 	}()
 
-	return cont, done
+	return
 }
 
 // TODO aggregate maybe
