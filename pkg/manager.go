@@ -417,6 +417,15 @@ func (n *N) initCache() error {
 
 	resp, err := http.Get("https://nodejs.org/download/release/index.json")
 	if err != nil {
+		if cacheExists {
+			if err := json.NewDecoder(cacheFile).Decode(&data); err != nil {
+				return err
+			}
+
+			n.cache = data
+			return nil
+		}
+
 		return err
 	}
 
