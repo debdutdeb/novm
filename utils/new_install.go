@@ -1,4 +1,4 @@
-package main
+package utils
 
 /*
 does some new install stuff
@@ -18,7 +18,7 @@ import (
 	"github.com/debdutdeb/node-proxy/state"
 )
 
-func handleNewInstall() error {
+func HandleNewInstall() error {
 	s, err := state.NewState()
 	if err != nil {
 		return err
@@ -66,6 +66,8 @@ func handleNewInstall() error {
 }
 
 func setnpmPrefix() error {
+	prefix := filepath.Join(os.Getenv("HOME"), common.NOVM_DIR)
+
 	f, err := os.OpenFile(filepath.Join(os.Getenv("HOME"), ".npmrc"), os.O_RDWR|os.O_CREATE, 0750)
 	if err != nil {
 		return err
@@ -77,13 +79,25 @@ func setnpmPrefix() error {
 		return err
 	}
 
+	if len(b) == 0 {
+		_, err := f.WriteString(fmt.Sprintf("prefix=%s\n", prefix))
+		return err
+	}
+
 	lines := strings.Split(string(b), "\n")
+
+	replaced := false
 
 	for i, line := range lines {
 		if len(line) >= 7 && line[:7] == "prefix=" {
-			lines[i] = "prefix=" + filepath.Join(os.Getenv("HOME"), common.NOVM_DIR)
+			lines[i] = "prefix=" + prefix
+			replaced = true
 			break
 		}
+	}
+
+	if !replaced {
+		lines = append(lines, "prefix="+prefix)
 	}
 
 	f.Seek(0, io.SeekStart)

@@ -4,10 +4,11 @@ import (
 	"log"
 
 	"github.com/debdutdeb/node-proxy/commands"
+	"github.com/debdutdeb/node-proxy/utils"
 )
 
 func main() {
-	if err := handleNewInstall(); err != nil {
+	if err := utils.HandleNewInstall(); err != nil {
 		log.Fatal("failed to run fresh install tasks: ", err)
 	}
 
