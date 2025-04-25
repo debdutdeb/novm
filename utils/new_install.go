@@ -5,7 +5,6 @@ does some new install stuff
 */
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -47,22 +46,23 @@ func HandleNewInstall() error {
 		dir = filepath.Dir(me)
 	}
 
+	var linkTo string
 	switch bin {
 	case "node":
-		if err := os.Symlink(me, filepath.Join(dir, "npm")); errors.Is(err, os.ErrExist) {
-			return nil
-		} else {
-			return err
-		}
+		linkTo = filepath.Join(dir, "npm")
 	case "npm":
-		if err := os.Symlink(me, filepath.Join(dir, "node")); errors.Is(err, os.ErrExist) {
-			return nil
-		} else {
-			return err
-		}
+		linkTo = filepath.Join(dir, "node")
 	default:
 		return fmt.Errorf("what binary is this? I should either be node or npm, but seems like I am %s", bin)
 	}
+
+	fmt.Printf("Linking %s to %s\n", me, linkTo)
+
+	if err := sudoLn(me, filepath.Join(dir, linkTo)); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func setnpmPrefix() error {
@@ -105,4 +105,27 @@ func setnpmPrefix() error {
 	_, err = f.WriteString(strings.Join(lines, "\n"))
 
 	return err
+}
+
+func sudoLn(path1, path2 string) error {
+	// ????
+	f1, err := os.Stat(path1)
+	if err != nil {
+		return fmt.Errorf("unable to access file %s, err: %v", path1, err)
+	}
+
+	if !f1.IsDir() {
+		return fmt.Errorf("%s is not a file", path1)
+	}
+
+	f2, err := os.Stat(path2)
+	if err != nil {
+		return fmt.Errorf("unable to access file %s, err: %v", path2, err)
+	}
+
+	if !f2.IsDir() {
+		return fmt.Errorf("%s is not a file", path2)
+	}
+
+	return exec.Command("sudo", "ln", "-s", path1, path2).Run()
 }
