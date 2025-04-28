@@ -12,8 +12,8 @@ import (
 	"os/exec"
 	"os/user"
 	"path/filepath"
+	"regexp"
 	"strconv"
-	"strings"
 	"syscall"
 	"time"
 
@@ -90,25 +90,39 @@ func setnpmPrefix() error {
 		return err
 	}
 
-	lines := strings.Split(string(b), "\n")
-
 	replaced := false
 
-	for i, line := range lines {
-		if len(line) >= 7 && line[:7] == "prefix=" {
-			lines[i] = "prefix=" + prefix
+	// what will eventually be written
+	bytes := make([]byte, len(b))
+
+	// lines, basically
+	newlines := []int{}
+
+	prefixReg := regexp.MustCompile("^prefix=")
+
+	for i, b_ := range b {
+		bytes[i] = b_
+		if b_ != '\n' {
+			newlines = append(newlines, i)
+			continue
+		}
+
+		if prefixReg.Match(bytes) {
 			replaced = true
+			prefixBytes := []byte("prefix=" + prefix + "\n")
+			bytes = bytes[:newlines[len(newlines)-2]] // skip this line
+			bytes = append(bytes, append(prefixBytes, b[i:]...)...)
 			break
 		}
 	}
 
 	if !replaced {
-		lines = append(lines, "prefix="+prefix)
+		bytes = append(bytes, []byte("prefix="+prefix+"\n")...)
 	}
 
 	f.Seek(0, io.SeekStart)
 
-	_, err = f.WriteString(strings.Join(lines, "\n"))
+	_, err = f.Write(bytes)
 
 	return err
 }
