@@ -21,7 +21,7 @@ import (
 	"github.com/debdutdeb/node-proxy/state"
 )
 
-var errNotWriteable = fmt.Errorf("does not have permission to write to dir")
+var errNotWriteable = errors.New("does not have permission to write to dir")
 
 func HandleNewInstall() error {
 	s, err := state.NewState()
@@ -162,25 +162,29 @@ func isWritable(dir string) error {
 		return fmt.Errorf("%s is not a directory", dir)
 	}
 
+	me, err := user.Current()
+	if err != nil {
+		return err
+	}
+
+	uid, _ := strconv.Atoi(me.Uid)
+
+	if uid == 0 {
+		return errors.New("") // run as root no need for sudo
+	}
+
+	gid, _ := strconv.Atoi(me.Gid)
+
 	perms := s.Mode().Perm()
 
 	if perms&0002 == 0002 { // other writeable, ownership doesn't matter
 		return nil
 	}
 
-	me, err := user.Current()
-	if err != nil {
-		return err
-	}
-
 	sysStat, ok := s.Sys().(*syscall.Stat_t)
 	if !ok {
 		return fmt.Errorf("unable to detect dir ownershit for %s", dir)
 	}
-
-	uid, _ := strconv.Atoi(me.Uid)
-
-	gid, _ := strconv.Atoi(me.Gid)
 
 	if sysStat.Uid == uint32(uid) && perms&0200 == 0200 {
 		return nil
