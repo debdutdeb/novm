@@ -12,7 +12,6 @@ import (
 	"os/exec"
 	"os/user"
 	"path/filepath"
-	"regexp"
 	"strconv"
 	"syscall"
 	"time"
@@ -71,9 +70,75 @@ func HandleNewInstall() error {
 	return nil
 }
 
-func setnpmPrefix() error {
+func updateNpmPrefix(chars []byte) ([]byte, error) {
 	prefix := filepath.Join(os.Getenv("HOME"), common.NOVM_DIR)
 
+	if len(chars) == 0 {
+		return []byte(fmt.Sprintf("prefix=%s\n", prefix)), nil
+	}
+
+	replaced := false
+
+	// what will eventually be written
+	bytes := make([]byte, len(chars))
+
+	// lines, basically
+	newlines := []int{}
+
+	newPrefixBytes := []byte("prefix=" + prefix + "\n")
+
+	doesLineContainPrefix := func(line []byte) bool {
+		toMatch := []byte{'p', 'r', 'e', 'f', 'i', 'x', '='}
+		for i, b := range toMatch {
+			if b != line[i] {
+				return false
+			}
+		}
+
+		return true
+	}
+
+	pickLine := func(num int) []byte {
+		if num == 1 {
+			return bytes[:newlines[0]]
+		}
+
+		return bytes[newlines[num-2]+1 : newlines[num-1]]
+	}
+
+	for i, char := range chars {
+		bytes[i] = char
+		if char != 10 {
+			continue
+		}
+
+		newlines = append(newlines, i)
+
+		if doesLineContainPrefix(pickLine(len(newlines))) /* last line */ {
+			replaced = true
+			if len(newlines) == 1 {
+				bytes = []byte{}
+			} else {
+				bytes = bytes[:len(newlines)-2] // until 2nd newline means removing the prefix= line
+			}
+			bytes = append(bytes, append(newPrefixBytes, chars[i:]...)...) // add the new prefix and rest of the lines, no need to iterate anymore
+			break
+		}
+	}
+
+	if bytes[len(bytes)-1] != 10 && doesLineContainPrefix(bytes[newlines[len(newlines)-1]+1:]) {
+		// if not newline, retry this line
+		bytes = bytes[:newlines[len(newlines)-1]+1]
+	}
+
+	if !replaced {
+		bytes = append(bytes, newPrefixBytes...)
+	}
+
+	return bytes, nil
+}
+
+func setnpmPrefix() error {
 	f, err := os.OpenFile(filepath.Join(os.Getenv("HOME"), ".npmrc"), os.O_RDWR|os.O_CREATE, 0750)
 	if err != nil {
 		return err
@@ -85,39 +150,9 @@ func setnpmPrefix() error {
 		return err
 	}
 
-	if len(b) == 0 {
-		_, err := f.WriteString(fmt.Sprintf("prefix=%s\n", prefix))
+	bytes, err := updateNpmPrefix(b)
+	if err != nil {
 		return err
-	}
-
-	replaced := false
-
-	// what will eventually be written
-	bytes := make([]byte, len(b))
-
-	// lines, basically
-	newlines := []int{}
-
-	prefixReg := regexp.MustCompile("^prefix=")
-
-	for i, b_ := range b {
-		bytes[i] = b_
-		if b_ != '\n' {
-			newlines = append(newlines, i)
-			continue
-		}
-
-		if prefixReg.Match(bytes) {
-			replaced = true
-			prefixBytes := []byte("prefix=" + prefix + "\n")
-			bytes = bytes[:newlines[len(newlines)-2]] // skip this line
-			bytes = append(bytes, append(prefixBytes, b[i:]...)...)
-			break
-		}
-	}
-
-	if !replaced {
-		bytes = append(bytes, []byte("prefix="+prefix+"\n")...)
 	}
 
 	f.Seek(0, io.SeekStart)
