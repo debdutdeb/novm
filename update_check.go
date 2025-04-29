@@ -70,9 +70,14 @@ func checkUpdate(wg *sync.WaitGroup) error {
 		state *st.State
 	)
 
+	waitAndLog := func(msg string, args ...any) {
+		wg.Wait()
+		log.Printf(msg, args...)
+	}
+
 	state, err = st.NewState()
 	if err != nil {
-		log.Printf("[ERROR] failed to load current state: %v", err)
+		waitAndLog("[ERROR] failed to load current state: %v", err)
 		return err
 	}
 
@@ -82,13 +87,13 @@ func checkUpdate(wg *sync.WaitGroup) error {
 
 	err = state.IncUpdateCheck()
 	if err != nil {
-		log.Printf("[ERROR] failed to update state: %v", err)
+		waitAndLog("[ERROR] failed to update state: %v", err)
 		return err
 	}
 
 	req, err = http.NewRequest("GET", "https://api.github.com/repos/debdutdeb/novm/releases/latest", nil)
 	if err != nil {
-		log.Printf("[ERROR] failed to fetch latest update: %v", err)
+		waitAndLog("[ERROR] failed to fetch latest update: %v", err)
 		return err
 	}
 
@@ -97,17 +102,17 @@ func checkUpdate(wg *sync.WaitGroup) error {
 
 	resp, err = (&http.Client{}).Do(req)
 	if err != nil {
-		log.Printf("[ERROR] failed to fetch latest update: %v", err)
+		waitAndLog("[ERROR] failed to fetch latest update: %v", err)
 		return err
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
-		log.Printf("[ERROR] failed to fetch latest update: %v", err)
+		waitAndLog("[ERROR] failed to fetch latest update: %v", err)
 		return err
 	}
 
 	if semver.Compare(versions.Version, release.Tag) != -1 {
-		log.Println("no new novm updates found.")
+		waitAndLog("no new novm updates found.")
 		return nil
 	}
 
@@ -115,7 +120,7 @@ func checkUpdate(wg *sync.WaitGroup) error {
 
 	dir, err = gopark.MkdirTemp("", common.BIN_NAME)
 	if err != nil {
-		log.Printf("[ERROR] failed to download latest binary: %v", err)
+		waitAndLog("[ERROR] failed to download latest binary: %v", err)
 		return err
 	}
 
@@ -124,7 +129,7 @@ func checkUpdate(wg *sync.WaitGroup) error {
 	for _, asset := range release.Assets {
 		if asset.Name == common.BIN_NAME+"-"+runtime.GOOS+"-"+runtime.GOARCH {
 			if err := gopark.DownloadSilent(asset.Url, tmpDownload); err != nil {
-				log.Printf("[ERROR] failed to download latest binary: %v", err)
+				waitAndLog("[ERROR] failed to download latest binary: %v", err)
 				return err
 			}
 
@@ -142,7 +147,7 @@ func checkUpdate(wg *sync.WaitGroup) error {
 		for {
 			<-sig
 
-			log.Println("ignoring signal since novm is still updating")
+			go waitAndLog("ignoring signal since novm is still updating")
 		}
 	}()
 
