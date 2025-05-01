@@ -134,7 +134,7 @@ func NewNodeManager(global bool, version string, rootDir string) (*N, error) {
 	}
 
 	n.installDir = filepath.Join(rootDir, "versions", n.versionStr, runtime.GOOS, n.arch)
-	n.environment = append(os.Environ(), "NP_NODE_VERSION="+n.versionStr) // make sure we continue using this version on every nested call (like lifecycle scripts) in case source isn't environment variable
+	n.environment = append(os.Environ(), "NODE_VERSION="+n.versionStr) // make sure we continue using this version on every nested call (like lifecycle scripts) in case source isn't environment variable
 
 	if n.global {
 		binPath, err := exec.LookPath("node")

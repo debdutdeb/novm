@@ -74,7 +74,7 @@ func updateNpmPrefix(chars []byte) ([]byte, error) {
 	prefix := filepath.Join(os.Getenv("HOME"), common.NOVM_DIR)
 
 	if len(chars) == 0 {
-		return []byte(fmt.Sprintf("prefix=%s\n", prefix)), nil
+		return fmt.Appendf(nil, "prefix=%s\n", prefix), nil
 	}
 
 	replaced := false

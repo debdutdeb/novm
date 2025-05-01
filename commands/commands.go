@@ -21,7 +21,7 @@ func init() {
 	}
 
 	sources := source{
-		"environment":  sourceEnvironment, // NP_NODE_VERSION
+		"environment":  sourceEnvironment, // NODE_VERSION
 		"package.json": sourcePackageJson, // engines, volta
 		"nvmrc":        sourceNvmrc,
 	}

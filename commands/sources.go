@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"os"
 )
 
@@ -14,7 +15,12 @@ func sourceEnvironment() (string, error) {
 		return version, nil
 	}
 
-	return os.Getenv("NP_NODE_VERSION"), nil
+	version := os.Getenv("NP_NODE_VERSION")
+	if version != "" {
+		log.Println("NP_NODE_VERSION is deprecated, use NODE_VERSION instead")
+	}
+
+	return version, nil
 }
 
 type packageJson struct {
