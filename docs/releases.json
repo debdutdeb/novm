@@ -1,6 +1,32 @@
 {
   "releases": [
     {
+      "tag": "v1.3.1",
+      "url": "https://github.com/debdutdeb/novm/releases/tag/v1.3.1",
+      "assets": [
+        {
+          "os": "darwin",
+          "arch": "amd64",
+          "download_url": "https://github.com/debdutdeb/novm/releases/download/v1.3.1/novm-darwin-amd64"
+        },
+        {
+          "os": "darwin",
+          "arch": "arm64",
+          "download_url": "https://github.com/debdutdeb/novm/releases/download/v1.3.1/novm-darwin-arm64"
+        },
+        {
+          "os": "linux",
+          "arch": "amd64",
+          "download_url": "https://github.com/debdutdeb/novm/releases/download/v1.3.1/novm-linux-amd64"
+        },
+        {
+          "os": "linux",
+          "arch": "arm64",
+          "download_url": "https://github.com/debdutdeb/novm/releases/download/v1.3.1/novm-linux-arm64"
+        }
+      ]
+    },
+    {
       "tag": "v1.3.0",
       "url": "https://github.com/debdutdeb/novm/releases/tag/v1.3.0",
       "assets": [
