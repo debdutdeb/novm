@@ -1,0 +1,29 @@
+name: Update releases manifest
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-manifest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build docs/releases.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_API_URL: ${{ github.api_url }}
+        run: bash .scripts/update-releases-json.sh
+
+      - name: Commit and push
+        uses: EndBug/add-and-commit@v10
+        with:
+          add: docs/releases.json
+          message: "docs: refresh releases.json (${{ github.event_name }})"
+          default_author: github_actions
