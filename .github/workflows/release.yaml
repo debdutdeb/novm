@@ -7,6 +7,11 @@ on:
         required: true
         description: release version
       generate-changelogs:
+        type: "choice"
+        options:
+          - 'yes'
+          - 'no'
+        default: 'yes'
 
 
 permissions:
