@@ -169,7 +169,7 @@ func linkFiles(path1, path2 string) error {
 		return fmt.Errorf("unable to access file %s, err: %v", path1, err)
 	}
 
-	if !f1.IsDir() {
+	if f1.IsDir() {
 		return fmt.Errorf("%s is not a file", path1)
 	}
 
