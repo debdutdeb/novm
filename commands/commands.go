@@ -42,10 +42,7 @@ func init() {
 func Run() error {
 	var err error
 
-	root, err := common.RootDir()
-	if err != nil {
-		return err
-	}
+	root := common.RootDir
 
 	if os.Getenv("NOVM_WAKE") != "" {
 		return cmd.Root(root).Execute()

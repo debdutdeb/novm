@@ -19,10 +19,7 @@ type updateState struct {
 }
 
 func NewState() (*State, error) {
-	root, err := common.RootDir()
-	if err != nil {
-		return nil, err
-	}
+	root := common.RootDir
 
 	f, err := os.Open(filepath.Join(root, "state.json"))
 	if err != nil {
@@ -64,10 +61,7 @@ func (s *State) IncUpdateCheck() error {
 
 	s.Update.LastChecked = time.Now()
 
-	root, err := common.RootDir()
-	if err != nil {
-		return err
-	}
+	root := common.RootDir
 
 	f, err := os.OpenFile(filepath.Join(root, "state.json"), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0750)
 	if err != nil {

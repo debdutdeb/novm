@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -185,5 +186,5 @@ func currentExecutable() (string, error) {
 		return filepath.EvalSymlinks(path)
 	}
 
-	return "", fmt.Errorf("%w, %w", err1, err2)
+	return "", errors.Join(err1, err2)
 }

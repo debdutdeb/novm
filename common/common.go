@@ -2,9 +2,27 @@ package common
 
 import (
 	"log"
+	"os"
 	"os/user"
 	"path/filepath"
 )
+
+var RootDir string
+
+func init() {
+	workdir := os.Getenv("NOVM_WORKDIR")
+	if workdir != "" {
+		RootDir = workdir
+		return
+	}
+
+	root, err := rootDir()()
+	if err != nil {
+		log.Fatalf("failed to detect current user: %v", err)
+	}
+
+	RootDir = root
+}
 
 const NOVM_DIR = ".novm"
 
@@ -22,5 +40,3 @@ func rootDir() func() (string, error) {
 		return root, err
 	}
 }
-
-var RootDir = rootDir()
