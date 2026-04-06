@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	if !isInteractive() {
+	if !utils.IsInteractive() {
 		if err := commands.Run(); err != nil {
 			log.Fatal(err)
 			os.Exit(1)

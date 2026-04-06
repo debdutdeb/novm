@@ -1,6 +1,6 @@
 //go:build darwin
 
-package main
+package utils
 
 import (
 	"os"
@@ -8,7 +8,7 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-func isInteractive() bool {
+func IsInteractive() bool {
 	_, err := unix.IoctlGetTermios(int(os.Stdout.Fd()), unix.TIOCGETA)
 	return err == nil
 }

@@ -16,6 +16,7 @@ import (
 
 	semverv3 "github.com/Masterminds/semver/v3"
 	gopark "github.com/debdutdeb/gopark/pkg/utils"
+	"github.com/debdutdeb/node-proxy/utils"
 )
 
 var ErrNodeNotInstalled = errors.New("nodejs not installed")
@@ -268,9 +269,16 @@ func (n *N) Install() error {
 
 	archivePath := filepath.Join(tmpDir, filename)
 
-	err = gopark.DownloadWithProgressBar("Node "+n.versionStr, url, archivePath)
-	if err != nil {
-		return err
+	if utils.IsInteractive() {
+		err = gopark.DownloadWithProgressBar("Node "+n.versionStr, url, archivePath)
+		if err != nil {
+			return err
+		}
+	} else {
+		err = gopark.DownloadSilent(url, archivePath)
+		if err != nil {
+			return err
+		}
 	}
 
 	cmd := exec.Command("xz", "--decompress", archivePath)
