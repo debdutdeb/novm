@@ -61,9 +61,11 @@ func HandleNewInstall() error {
 		return fmt.Errorf("what binary is this? I should either be node or npm, but seems like I am %s", bin)
 	}
 
-	fmt.Printf("Linking %s to %s\n", me, linkTo)
+	fullBinPath := filepath.Join(dir, bin)
 
-	if err := linkFiles(me, filepath.Join(dir, linkTo)); err != nil {
+	fmt.Printf("Linking %s to %s\n", fullBinPath, linkTo)
+
+	if err := linkFiles(fullBinPath, filepath.Join(dir, linkTo)); err != nil {
 		return err
 	}
 
