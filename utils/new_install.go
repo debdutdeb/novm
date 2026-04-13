@@ -65,7 +65,7 @@ func HandleNewInstall() error {
 
 	fmt.Printf("Linking %s to %s\n", fullBinPath, linkTo)
 
-	if err := linkFiles(fullBinPath, filepath.Join(dir, linkTo)); err != nil {
+	if err := linkFiles(fullBinPath, linkTo); err != nil {
 		return err
 	}
 
@@ -179,7 +179,11 @@ func linkFiles(path1, path2 string) error {
 
 	if err != nil {
 		if errors.Is(err, errNotWriteable) {
-			return exec.Command("sudo", "ln", "-s", path1, path2).Run()
+			cmd := exec.Command("sudo", "ln", "-sf", path1, path2)
+			cmd.Stdin = os.Stdin
+			cmd.Stderr = os.Stderr
+			cmd.Stdout = os.Stdout
+			return cmd.Run()
 		}
 
 		return fmt.Errorf("failed to link files, err: %w", err)
