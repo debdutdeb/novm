@@ -47,3 +47,7 @@ jobs:
           fail_on_unmatched_files: true
           target_commitish: ${{ github.sha }}
           generate_release_notes: ${{ inputs.generate-changelogs }}
+  update-release-json:
+    needs: release
+    runs-on: ubuntu-latest
+    uses: debdutdeb/novm/.github/workflows/update-releases-manifest.yaml@main
