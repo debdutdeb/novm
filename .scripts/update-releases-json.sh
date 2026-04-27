@@ -45,9 +45,13 @@ main() {
     return 1
   fi
 
-  local page=1
-  local all_releases='[]'
+  local tmp_releases
+  tmp_releases="$(mktemp)"
+  trap 'test -n ${tmp_releases:-} && rm -f "tmp_releases"' EXIT
 
+  echo "[]" > "$tmp_releases"
+
+  local page=1
   local part page_count
   while true; do
     if [[ "$use_gh" == true ]]; then
@@ -61,7 +65,7 @@ main() {
       break
     fi
 
-    all_releases="$(jq -n --argjson a "$all_releases" --argjson b "$part" '$a + $b')"
+    echo "$part" >> "$tmp_releases"
     ((page++)) || true
 
     if ((page_count < 100)); then
@@ -70,7 +74,7 @@ main() {
   done
 
   mkdir -p "$(dirname "$output_path")"
-  echo "$all_releases" | jq -f "${script_dir}/update-releases-json.jq" >"$output_path"
+  jq -s 'add' "$tmp_releases" | jq -f "${script_dir}/update-releases-json.jq" >"$output_path"
   echo "wrote ${output_path}"
 }
 
