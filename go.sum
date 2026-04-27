@@ -1,6 +1,6 @@
 github.com/cpuguy83/go-md2man/v2 v2.0.3/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
-github.com/debdutdeb/gopark v0.0.0-20240320085805-c715fabf8431 h1:VQMJr74nd0vBVZdRl/xHhwp6Hzq+qS8MFy8qFIK0Ckc=
-github.com/debdutdeb/gopark v0.0.0-20240320085805-c715fabf8431/go.mod h1:wFBbo16ZeqbuiP/1W+98R8m2vSzemWcnbv8Yh79JJ+w=
+github.com/debdutdeb/gopark v0.0.0-20260427071909-043a49ed29bf h1:lGUmqlxwp3Q7sCYyM+TjjbBxaFqsxrp5GtokKimv8iY=
+github.com/debdutdeb/gopark v0.0.0-20260427071909-043a49ed29bf/go.mod h1:wFBbo16ZeqbuiP/1W+98R8m2vSzemWcnbv8Yh79JJ+w=
 github.com/debdutdeb/semver/v3 v3.0.0-20240321102433-1ec115cacb4d h1:lLWlykvT3cutLNWu04AULIdybNrrYtXWLdCKkVwSlkE=
 github.com/debdutdeb/semver/v3 v3.0.0-20240321102433-1ec115cacb4d/go.mod h1:qvl/7zhW3nngYb5+80sSMF+FG2BjYrf8m9wsX0PNOMQ=
 github.com/inconshreveable/mousetrap v1.1.0 h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2s0bqwp9tc8=
