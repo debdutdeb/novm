@@ -49,10 +49,15 @@ type N struct {
 	version SemverManager
 }
 
+// Deprecated use Npm intarface
 type NpmRunner interface {
 	CaptureOutput(args ...string) ([]byte, []byte, error)
 	Run(args ...string) error
 }
+
+type Npm NpmRunner
+
+type Yarn Npm
 
 func NewNodeManager(global bool, version string, rootDir string) (*N, error) {
 	n := &N{
@@ -253,9 +258,15 @@ func (n *N) findLatestVersion(lts bool) (string, error) {
 	return "", fmt.Errorf("failed to find latest version for file %s", fileType)
 }
 
-func (n *N) Npm() NpmRunner {
+func (n *N) Npm() Npm {
 	npm := *n
 	npm.binPath = filepath.Join(filepath.Dir(n.binPath), "npm")
+	return &npm
+}
+
+func (n *N) Yarn() Yarn {
+	npm := *n
+	npm.binPath = filepath.Join(filepath.Dir(n.binPath), "yarn")
 	return &npm
 }
 
