@@ -266,7 +266,8 @@ func (n *N) Npm() Npm {
 
 func (n *N) Yarn() Yarn {
 	npm := *n
-	npm.binPath = filepath.Join(filepath.Dir(n.binPath), "yarn")
+	// yarn is not part of standard install, use the prefix, rootDir + /bin
+	npm.binPath = filepath.Join(n.rootDir, "bin", "yarn")
 	return &npm
 }
 
