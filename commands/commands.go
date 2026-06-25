@@ -71,6 +71,10 @@ func Run() error {
 		return n.Npm().Run(os.Args[1:]...)
 	}
 
+	if filepath.Base(os.Args[0]) == "yarn" {
+		return n.Yarn().Run(os.Args[1:]...)
+	}
+
 	return n.Run(os.Args[1:]...)
 }
 
