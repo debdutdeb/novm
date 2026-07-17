@@ -6,11 +6,12 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 )
 
-type source map[string]func() (string, error)
+type source map[string]func(string) (string, error)
 
-func sourceEnvironment() (string, error) {
+func sourceEnvironment(_dir string) (string, error) {
 	if version := os.Getenv("NODE_VERSION"); version != "" {
 		return version, nil
 	}
@@ -33,9 +34,9 @@ type packageJson struct {
 	} `json:"volta"`
 }
 
-func sourcePackageJson() (string, error) {
+func sourcePackageJson(dir string) (string, error) {
 	var p packageJson
-	f, err := os.Open("package.json")
+	f, err := os.Open(filepath.Join(dir, "package.json"))
 	if err != nil {
 		if os.IsNotExist(err) {
 			return "", nil
@@ -62,7 +63,7 @@ func sourcePackageJson() (string, error) {
 	return "", nil
 }
 
-func sourceNvmrc() (string, error) {
+func sourceNvmrc(dir string) (string, error) {
 	// only supports the version
 	f, err := os.Open(".nvmrc")
 	if err != nil {

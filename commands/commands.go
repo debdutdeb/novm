@@ -26,16 +26,21 @@ func init() {
 		"nvmrc":        sourceNvmrc,
 	}
 
-	for sourceName, sourceFn := range sources {
-		v, err := sourceFn()
-		if v != "" {
-			NodeJsVersion = v
-			return
-		}
+	depth := common.DepthSourceDetection()
+	dir := "."
+	for i := 0; i <= depth; i++ {
+		for sourceName, sourceFn := range sources {
+			v, err := sourceFn(dir)
+			if v != "" {
+				NodeJsVersion = v
+				return
+			}
 
-		if err != nil {
-			log.Println("unable to parse source:", sourceName, "error:", err)
+			if err != nil {
+				log.Println("unable to parse source:", sourceName, "error:", err)
+			}
 		}
+		dir = filepath.Join(dir, "..")
 	}
 }
 

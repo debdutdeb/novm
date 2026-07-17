@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
+	"strconv"
 )
 
 var RootDir string
@@ -38,5 +39,17 @@ func rootDir() func() (string, error) {
 
 	return func() (string, error) {
 		return root, err
+	}
+}
+
+func DepthSourceDetection() int {
+	var depth = os.Getenv("NOVM_DEPTH_SOURCE_DETECTION")
+	if depth == "" {
+		return 2
+	}
+	if n, err := strconv.Atoi(depth); err != nil {
+		return 2
+	} else {
+		return n
 	}
 }
