@@ -179,21 +179,20 @@ func sourceDockerfile(dir string) (string, error) {
 	}
 	defer f.Close()
 	scanner := bufio.NewScanner(f)
-	from := ""
+	version := ""
 	for scanner.Scan() {
 		text := scanner.Text()
 		parts := strings.Split(strings.ToLower(strings.TrimSpace(text)), " ")
+		var image string
 		if parts[0] == "from" {
-			from = parts[1]
+			image = parts[1]
 		}
+		parts = strings.Split(image, ":")
+		parts[0] = strings.TrimPrefix(parts[0], "docker.io/")
+		if parts[0] != "node" {
+			continue
+		}
+		version = strings.Split(parts[1], "-")[0]
 	}
-	parts := strings.Split(from, ":")
-	if strings.HasPrefix(parts[0], "docker.io/") {
-		parts[0] = strings.TrimLeft(parts[0], "docker.io/")
-	}
-	if parts[0] != "node" {
-		return "", nil
-	}
-	version := strings.Split(parts[1], "-")[0]
 	return version, nil
 }
