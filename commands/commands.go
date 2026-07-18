@@ -75,7 +75,7 @@ func Run() error {
 		return fmt.Errorf("failed to install node version %w", err)
 	}
 
-	switch os.Args[0] {
+	switch filepath.Base(os.Args[0]) {
 	case "npm":
 		return n.Npm().Run(os.Args[1:]...)
 	case "yarn":
