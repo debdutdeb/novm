@@ -13,6 +13,7 @@ import (
 	"runtime"
 	"sync"
 	"syscall"
+	"time"
 
 	"golang.org/x/mod/semver"
 
@@ -23,8 +24,9 @@ import (
 )
 
 type releasesResponse struct {
-	Tag    string  `json:"tag_name"`
-	Assets []asset `json:"assets"`
+	Tag         string  `json:"tag_name"`
+	Assets      []asset `json:"assets"`
+	PublishedAt string  `json:"published_at"`
 }
 
 type asset struct {
@@ -112,7 +114,15 @@ func checkUpdate(wg *sync.WaitGroup) error {
 		return err
 	}
 
-	if semver.Compare(versions.Version, release.Tag) != -1 {
+	publishedAt, err := time.Parse("2006-01-02T15:04:05Z07:00", release.PublishedAt)
+	if err != nil {
+		waitAndLog("[ERROR] failed to parse publish time of a release %s", release.PublishedAt)
+		return nil
+	}
+
+	buildTime, _ := time.Parse("Mon Jan _2 15:04:05 MST 2006", versions.BuildTime)
+
+	if semver.Compare(versions.Version, release.Tag) != -1 || buildTime.Sub(publishedAt) > 0 {
 		waitAndLog("no new novm updates found.")
 		return nil
 	}
