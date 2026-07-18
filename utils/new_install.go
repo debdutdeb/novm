@@ -56,7 +56,7 @@ func HandleNewInstall() error {
 	return linkOthers(target, filepath.Dir(path), allLinks, me)
 }
 
-var allLinks = []string{"node", "npm", "yarn", "npx"}
+var allLinks = []string{"node", "npm", "yarn", "npx", "corepack", "pnpm"}
 
 // resolveRealBin follows path if it's a symlink and returns the file it
 // ultimately points to. If path isn't a symlink, it is returned as is.

@@ -63,6 +63,8 @@ type Npm nodeScriptWrapper
 type Yarn nodeScriptWrapper
 
 type Npx nodeScriptWrapper
+type Corepack nodeScriptWrapper
+type Pnpm nodeScriptWrapper
 
 func NewNodeManager(global bool, version string, rootDir string) (*N, error) {
 	n := &N{
@@ -275,10 +277,21 @@ func (n *N) Yarn() Yarn {
 	npm.binPath = filepath.Join(n.rootDir, "bin", "yarn")
 	return &npm
 }
+func (n *N) Pnpm() Pnpm {
+	npm := *n
+	// yarn is not part of standard install, use the prefix, rootDir + /bin
+	npm.binPath = filepath.Join(n.rootDir, "bin", "pnpm")
+	return &npm
+}
 
 func (n *N) Npx() Npx {
 	npx := *n
 	npx.binPath = filepath.Join(filepath.Dir(n.binPath), "npx")
+	return &npx
+}
+func (n *N) Corepack() Corepack {
+	npx := *n
+	npx.binPath = filepath.Join(filepath.Dir(n.binPath), "corepack")
 	return &npx
 }
 

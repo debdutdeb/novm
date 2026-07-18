@@ -85,6 +85,13 @@ func Run() error {
 		return n.Yarn().Run(os.Args[1:]...)
 	case "npx":
 		return n.Npx().Run(os.Args[1:]...)
+	case "corepack":
+		return n.Corepack().Run(os.Args[1:]...)
+	case "pnpm":
+		if err := installIfNotExists(n, "pnpm"); err != nil {
+			return err
+		}
+		return n.Pnpm().Run(os.Args[1:]...)
 	}
 
 	return n.Run(os.Args[1:]...)
@@ -96,7 +103,7 @@ func installIfNotExists(n *pkg.N, bin string) error {
 	if err != nil {
 		if os.IsNotExist(err) {
 			// install
-			return n.Run("install", bin, "-g")
+			return n.Npm().Run("install", bin, "-g")
 		}
 
 		return err
