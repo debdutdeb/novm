@@ -12,7 +12,7 @@ func Root(rootDir string) *cobra.Command {
 	}
 
 	cmd.AddCommand(versionCommand())
-	cmd.AddCommand(setupCommand())
+	cmd.AddCommand(setupCommand(), whereCmd())
 
 	return cmd
 }
