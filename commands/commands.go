@@ -21,9 +21,12 @@ func init() {
 	}
 
 	sources := source{
-		"environment":  sourceEnvironment, // NODE_VERSION
-		"package.json": sourcePackageJson, // engines, volta
-		"nvmrc":        sourceNvmrc,
+		sourceEnvironmentVariable: sourceEnvironment, // NODE_VERSION
+		sourcePackageJsonFile:     sourcePackageJson, // engines, volta
+		sourceNvmFile:             sourceNvmrc,
+		sourceNodeVersionFile:     sourceNodeVersion,
+		sourceToolVersionsFile:    wrapInExperimental(sourceToolVersionsFile, sourceToolVersions), // asdf, mise
+		sourceDockerfileFile:      wrapInExperimental(sourceDockerfileFile, sourceDockerfile),
 	}
 
 	depth := common.DepthSourceDetection()
