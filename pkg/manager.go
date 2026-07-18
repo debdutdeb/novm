@@ -49,15 +49,20 @@ type N struct {
 	version SemverManager
 }
 
-// Deprecated use Npm intarface
-type NpmRunner interface {
+type nodeScriptWrapper interface {
 	CaptureOutput(args ...string) ([]byte, []byte, error)
 	Run(args ...string) error
+	Runs(args string) error
 }
 
-type Npm NpmRunner
+// Deprecated use Npm intarface
+type NpmRunner = nodeScriptWrapper
 
-type Yarn Npm
+type Npm nodeScriptWrapper
+
+type Yarn nodeScriptWrapper
+
+type Npx nodeScriptWrapper
 
 func NewNodeManager(global bool, version string, rootDir string) (*N, error) {
 	n := &N{
@@ -271,6 +276,12 @@ func (n *N) Yarn() Yarn {
 	return &npm
 }
 
+func (n *N) Npx() Npx {
+	npx := *n
+	npx.binPath = filepath.Join(filepath.Dir(n.binPath), "npx")
+	return &npx
+}
+
 func (n *N) Install() error {
 	tmpDir, err := gopark.MkdirTemp("", "novm")
 	if err != nil {
@@ -332,6 +343,10 @@ func (n *N) EnsureInstalled() error {
 	}
 
 	return n.Install()
+}
+
+func (n *N) Runs(args string) error {
+	return n.Run(strings.Split(args, " ")...)
 }
 
 func (n *N) Run(args ...string) (err error) {

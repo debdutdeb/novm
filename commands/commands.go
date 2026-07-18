@@ -75,15 +75,36 @@ func Run() error {
 		return fmt.Errorf("failed to install node version %w", err)
 	}
 
-	if filepath.Base(os.Args[0]) == "npm" {
+	switch os.Args[0] {
+	case "npm":
 		return n.Npm().Run(os.Args[1:]...)
-	}
-
-	if filepath.Base(os.Args[0]) == "yarn" {
+	case "yarn":
+		if err := installIfNotExists(n, "yarn"); err != nil {
+			return err
+		}
 		return n.Yarn().Run(os.Args[1:]...)
+	case "npx":
+		return n.Npx().Run(os.Args[1:]...)
 	}
 
 	return n.Run(os.Args[1:]...)
+}
+
+func installIfNotExists(n *pkg.N, bin string) error {
+	path := filepath.Join(common.RootDir, "bin", bin)
+	fst, err := os.Stat(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			// install
+			return n.Run("install", bin, "-g")
+		}
+
+		return err
+	}
+	if fst.IsDir() {
+		return fmt.Errorf("%s is a dir, binary was expected", path)
+	}
+	return nil
 }
 
 func findMaxInstalledVersion(rootDir string) (string, error) {

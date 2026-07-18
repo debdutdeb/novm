@@ -38,35 +38,51 @@ func HandleNewInstall() error {
 		return err
 	}
 
-	me := os.Args[0]
+	me := filepath.Base(os.Args[0])
 
-	bin := filepath.Base(me)
-
-	var dir string
-
-	path, err := exec.LookPath(me) // for "path", this will always error
-	if err == nil {
-		dir = filepath.Dir(path)
-	} else {
-		dir = filepath.Dir(me)
+	path, err := exec.LookPath(me)
+	if err != nil {
+		path, err = filepath.Abs(os.Args[0])
+		if err != nil {
+			return err
+		}
 	}
 
-	var linkTo string
-	switch bin {
-	case "node":
-		linkTo = filepath.Join(dir, "npm")
-	case "npm":
-		linkTo = filepath.Join(dir, "node")
-	default:
-		return fmt.Errorf("what binary is this? I should either be node or npm, but seems like I am %s", bin)
-	}
-
-	fullBinPath := filepath.Join(dir, bin)
-
-	fmt.Printf("Linking %s to %s\n", fullBinPath, linkTo)
-
-	if err := linkFiles(fullBinPath, linkTo); err != nil {
+	target, err := resolveRealBin(path)
+	if err != nil {
 		return err
+	}
+
+	return linkOthers(target, filepath.Dir(path), allLinks, me)
+}
+
+var allLinks = []string{"node", "npm", "yarn", "npx"}
+
+// resolveRealBin follows path if it's a symlink and returns the file it
+// ultimately points to. If path isn't a symlink, it is returned as is.
+func resolveRealBin(path string) (string, error) {
+	target, err := os.Readlink(path)
+	if err != nil {
+		return path, nil
+	}
+
+	if !filepath.IsAbs(target) {
+		target = filepath.Join(filepath.Dir(path), target)
+	}
+
+	return target, nil
+}
+
+// linkOthers symlinks every name in links (other than exclude) inside dir to target.
+func linkOthers(target, dir string, links []string, exclude string) error {
+	for _, name := range links {
+		if name == exclude {
+			continue
+		}
+
+		if err := linkFiles(target, filepath.Join(dir, name)); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -189,7 +205,13 @@ func linkFiles(path1, path2 string) error {
 		return fmt.Errorf("failed to link files, err: %w", err)
 	}
 
-	return os.Symlink(path1, path2)
+	err = os.Symlink(path1, path2)
+	if os.IsExist(err) {
+		os.Remove(path2)
+		return os.Symlink(path1, path2)
+	}
+
+	return err
 }
 
 func isWritable(dir string) error {
