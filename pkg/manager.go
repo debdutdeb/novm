@@ -371,6 +371,11 @@ func (n *N) EnsureInstalled() error {
 func (n *N) Run(args ...string) (err error) {
 	cmd := n.Experimental_UnderlyingStdCmd(args...)
 
+	// let the command take over
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
 	err = cmd.Start()
 	if err != nil {
 		return
@@ -497,11 +502,6 @@ func (n *N) initCache() error {
 
 func (n *N) Experimental_UnderlyingStdCmd(args ...string) *exec.Cmd {
 	cmd := exec.Command(n.binPath, args...)
-
-	// let the command take over
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
 
 	cmd.Env = n.environment
 
