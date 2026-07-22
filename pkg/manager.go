@@ -52,7 +52,17 @@ type N struct {
 type nodeScriptWrapper interface {
 	CaptureOutput(args ...string) ([]byte, []byte, error)
 	Run(args ...string) error
-	Runs(args string) error
+
+	// Experimental_UnderlyingStdCmd as the name suggests is an experimental reciever.
+	// Existence of this method is not guaranteed.
+	// It returns the underlying standard Cmd struct that is run through Run and CaptureOutput recivers.
+	// Use it if more control is necessary at any point. Example:
+	//     cmd := n.Npm().Experimental_UnderlyingStdCmd("install", "somepackage")
+	//     cmd.Dir = "a/b/c/d"
+	//     cmd.Start()
+	//     cmd.Wait()
+	// This adds no state to N itself. And is kept as is to achieve no sideeffects;
+	Experimental_UnderlyingStdCmd(args ...string) *exec.Cmd
 }
 
 // Deprecated use Npm intarface
@@ -358,19 +368,8 @@ func (n *N) EnsureInstalled() error {
 	return n.Install()
 }
 
-func (n *N) Runs(args string) error {
-	return n.Run(strings.Split(args, " ")...)
-}
-
 func (n *N) Run(args ...string) (err error) {
-	cmd := exec.Command(n.binPath, args...)
-
-	// let the command take over
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	cmd.Env = n.environment
+	cmd := n.Experimental_UnderlyingStdCmd(args...)
 
 	err = cmd.Start()
 	if err != nil {
@@ -384,9 +383,7 @@ func (n *N) Run(args ...string) (err error) {
 
 // Deprecated
 func (n *N) CaptureOutput(args ...string) (stdout []byte, stderr []byte, err error) {
-	cmd := exec.Command(n.binPath, args...)
-
-	cmd.Env = n.environment
+	cmd := n.Experimental_UnderlyingStdCmd(args...)
 
 	stdout, err = cmd.Output()
 	if err != nil {
@@ -496,4 +493,17 @@ func (n *N) initCache() error {
 	n.cache = data
 
 	return nil
+}
+
+func (n *N) Experimental_UnderlyingStdCmd(args ...string) *exec.Cmd {
+	cmd := exec.Command(n.binPath, args...)
+
+	// let the command take over
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	cmd.Env = n.environment
+
+	return cmd
 }
