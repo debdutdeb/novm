@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/debdutdeb/node-proxy/common"
+	"github.com/debdutdeb/novm/common"
 
 	"github.com/spf13/cobra"
 )

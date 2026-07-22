@@ -5,8 +5,8 @@ import (
 	"log"
 	"runtime"
 
-	"github.com/debdutdeb/node-proxy/common"
-	"github.com/debdutdeb/node-proxy/pkg"
+	"github.com/debdutdeb/novm/common"
+	"github.com/debdutdeb/novm/pkg"
 	"github.com/spf13/cobra"
 )
 

@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/debdutdeb/gopark/pkg/utils"
-	"github.com/debdutdeb/node-proxy/common"
+	"github.com/debdutdeb/novm/common"
 )
 
 func TestUpdateNpmPrefix(t *testing.T) {

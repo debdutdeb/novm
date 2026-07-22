@@ -16,7 +16,7 @@ import (
 
 	semverv3 "github.com/Masterminds/semver/v3"
 	gopark "github.com/debdutdeb/gopark/pkg/utils"
-	"github.com/debdutdeb/node-proxy/utils"
+	"github.com/debdutdeb/novm/utils"
 )
 
 var ErrNodeNotInstalled = errors.New("nodejs not installed")

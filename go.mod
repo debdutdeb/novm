@@ -1,4 +1,4 @@
-module github.com/debdutdeb/node-proxy
+module github.com/debdutdeb/novm
 
 go 1.21.5
 

@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/debdutdeb/node-proxy/common"
+	"github.com/debdutdeb/novm/common"
 )
 
 type State struct {

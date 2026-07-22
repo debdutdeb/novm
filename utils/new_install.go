@@ -16,8 +16,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/debdutdeb/node-proxy/common"
-	"github.com/debdutdeb/node-proxy/state"
+	"github.com/debdutdeb/novm/common"
+	"github.com/debdutdeb/novm/state"
 )
 
 var errNotWriteable = errors.New("does not have permission to write to dir")

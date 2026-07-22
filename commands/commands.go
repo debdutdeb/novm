@@ -6,9 +6,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/debdutdeb/node-proxy/cmd"
-	"github.com/debdutdeb/node-proxy/common"
-	"github.com/debdutdeb/node-proxy/pkg"
+	"github.com/debdutdeb/novm/cmd"
+	"github.com/debdutdeb/novm/common"
+	"github.com/debdutdeb/novm/pkg"
 
 	"golang.org/x/mod/semver"
 )

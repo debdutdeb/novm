@@ -4,8 +4,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/debdutdeb/node-proxy/commands"
-	"github.com/debdutdeb/node-proxy/utils"
+	"github.com/debdutdeb/novm/commands"
+	"github.com/debdutdeb/novm/utils"
 )
 
 func main() {

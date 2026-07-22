@@ -18,9 +18,9 @@ import (
 	"golang.org/x/mod/semver"
 
 	gopark "github.com/debdutdeb/gopark/pkg/utils"
-	"github.com/debdutdeb/node-proxy/common"
-	st "github.com/debdutdeb/node-proxy/state"
-	"github.com/debdutdeb/node-proxy/versions"
+	"github.com/debdutdeb/novm/common"
+	st "github.com/debdutdeb/novm/state"
+	"github.com/debdutdeb/novm/versions"
 )
 
 type releasesResponse struct {
