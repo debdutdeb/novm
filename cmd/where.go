@@ -5,8 +5,8 @@ import (
 	"log"
 	"runtime"
 
-	"github.com/debdutdeb/novm/common"
-	"github.com/debdutdeb/novm/pkg"
+	"github.com/debdutdeb/novm/v3/common"
+	"github.com/debdutdeb/novm/v3/pkg"
 	"github.com/spf13/cobra"
 )
 

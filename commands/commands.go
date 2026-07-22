@@ -6,9 +6,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/debdutdeb/novm/cmd"
-	"github.com/debdutdeb/novm/common"
-	"github.com/debdutdeb/novm/pkg"
+	"github.com/debdutdeb/novm/v3/cmd"
+	"github.com/debdutdeb/novm/v3/common"
+	"github.com/debdutdeb/novm/v3/pkg"
 
 	"golang.org/x/mod/semver"
 )

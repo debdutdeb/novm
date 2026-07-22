@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/debdutdeb/novm/versions"
+	"github.com/debdutdeb/novm/v3/versions"
 
 	"github.com/spf13/cobra"
 )

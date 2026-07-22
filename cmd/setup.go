@@ -3,7 +3,7 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/debdutdeb/novm/utils"
+	"github.com/debdutdeb/novm/v3/utils"
 )
 
 func setupCommand() *cobra.Command {

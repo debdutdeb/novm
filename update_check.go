@@ -18,9 +18,9 @@ import (
 	"golang.org/x/mod/semver"
 
 	gopark "github.com/debdutdeb/gopark/pkg/utils"
-	"github.com/debdutdeb/novm/common"
-	st "github.com/debdutdeb/novm/state"
-	"github.com/debdutdeb/novm/versions"
+	"github.com/debdutdeb/novm/v3/common"
+	st "github.com/debdutdeb/novm/v3/state"
+	"github.com/debdutdeb/novm/v3/versions"
 )
 
 type releasesResponse struct {
@@ -94,7 +94,7 @@ func checkUpdate(wg *sync.WaitGroup) error {
 		return err
 	}
 
-	req, err = http.NewRequest("GET", "https://api.github.com/repos/debdutdeb/novm/releases/latest", nil)
+	req, err = http.NewRequest("GET", "https://api.github.com/repos/debdutdeb/novm/v3/releases/latest", nil)
 	if err != nil {
 		waitAndLog("[ERROR] failed to fetch latest update: %v", err)
 		return err
