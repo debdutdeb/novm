@@ -19,7 +19,10 @@ import (
 	"github.com/debdutdeb/novm/v3/utils"
 )
 
+// Deprecated: use package /v3/pkg/n instead
 var ErrNodeNotInstalled = errors.New("nodejs not installed")
+
+// Deprecated: use package /v3/pkg/n instead
 var ErrNodeVersionNotFound = errors.New("nodejs version not found")
 
 // the node version manager
@@ -34,6 +37,7 @@ type nCacheItem struct {
 
 type nCache []nCacheItem
 
+// Deprecated: use package /v3/pkg/n instead
 type N struct {
 	versionStr  string
 	arch        string
@@ -66,16 +70,25 @@ type nodeScriptWrapper interface {
 }
 
 // Deprecated use Npm intarface
+// Deprecated: use package /v3/pkg/n instead
 type NpmRunner = nodeScriptWrapper
 
+// Deprecated: use package /v3/pkg/n instead
 type Npm nodeScriptWrapper
 
+// Deprecated: use package /v3/pkg/n instead
 type Yarn nodeScriptWrapper
 
+// Deprecated: use package /v3/pkg/n instead
 type Npx nodeScriptWrapper
+
+// Deprecated: use package /v3/pkg/n instead
 type Corepack nodeScriptWrapper
+
+// Deprecated: use package /v3/pkg/n instead
 type Pnpm nodeScriptWrapper
 
+// Deprecated: use package /v3/pkg/n instead
 func NewNodeManager(global bool, version string, rootDir string) (*N, error) {
 	n := &N{
 		global:     global,

@@ -4,6 +4,7 @@ import (
 	semverv3 "github.com/Masterminds/semver/v3"
 )
 
+// Deprecated: use package /v3/pkg/n instead
 type SemverManager interface {
 	Compare(v *semverv3.Version) int
 }
