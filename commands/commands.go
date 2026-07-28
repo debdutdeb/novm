@@ -9,6 +9,7 @@ import (
 	"github.com/debdutdeb/novm/v3/cmd"
 	"github.com/debdutdeb/novm/v3/common"
 	"github.com/debdutdeb/novm/v3/pkg"
+	"github.com/debdutdeb/novm/v3/state"
 
 	"golang.org/x/mod/semver"
 )
@@ -50,6 +51,11 @@ func init() {
 func Run() error {
 	var err error
 
+	st, err := state.NewState()
+	if err != nil {
+		return fmt.Errorf("unable to load novm state: %w", err)
+	}
+
 	root := common.RootDir
 
 	if os.Getenv("NOVM_WAKE") != "" {
@@ -75,26 +81,48 @@ func Run() error {
 		return fmt.Errorf("failed to install node version %w", err)
 	}
 
+	if err := st.IncPoolHit(n.Version()); err != nil {
+		return fmt.Errorf("failed to update pool control for version %s: %w", n.Version(), err)
+	}
+
+	thisV := n.Version()
+
+	notCurrentVersion := func(v string) bool {
+		return thisV != v
+	}
+
 	switch filepath.Base(os.Args[0]) {
 	case "npm":
-		return n.Npm().Run(os.Args[1:]...)
+		return st.WhileCompactingPool(func(_s *state.State) error {
+			return n.Npm().Run(os.Args[1:]...)
+		}, notCurrentVersion)
 	case "yarn":
 		if err := installIfNotExists(n, "yarn"); err != nil {
 			return err
 		}
-		return n.Yarn().Run(os.Args[1:]...)
+		return st.WhileCompactingPool(func(_s *state.State) error {
+			return n.Yarn().Run(os.Args[1:]...)
+		}, notCurrentVersion)
 	case "npx":
-		return n.Npx().Run(os.Args[1:]...)
+		return st.WhileCompactingPool(func(_s *state.State) error {
+			return n.Npx().Run(os.Args[1:]...)
+		}, notCurrentVersion)
 	case "corepack":
-		return n.Corepack().Run(os.Args[1:]...)
+		return st.WhileCompactingPool(func(_s *state.State) error {
+			return n.Corepack().Run(os.Args[1:]...)
+		}, notCurrentVersion)
 	case "pnpm":
 		if err := installIfNotExists(n, "pnpm"); err != nil {
 			return err
 		}
-		return n.Pnpm().Run(os.Args[1:]...)
+		return st.WhileCompactingPool(func(_s *state.State) error {
+			return n.Pnpm().Run(os.Args[1:]...)
+		}, notCurrentVersion)
 	}
 
-	return n.Run(os.Args[1:]...)
+	return st.WhileCompactingPool(func(_s *state.State) error {
+		return n.Run(os.Args[1:]...)
+	}, notCurrentVersion)
 }
 
 func installIfNotExists(n *pkg.N, bin string) error {

@@ -1,12 +1,13 @@
 module github.com/debdutdeb/novm/v3
 
-go 1.21.5
+go 1.25.0
 
 require (
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/debdutdeb/gopark v0.0.0-20260427071909-043a49ed29bf
 	github.com/spf13/cobra v1.8.0
 	golang.org/x/mod v0.14.0
+	golang.org/x/sync v0.22.0
 	golang.org/x/sys v0.16.0
 )
 
