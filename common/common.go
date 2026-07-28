@@ -61,7 +61,7 @@ func Where(version string) string {
 }
 
 func VersionsDir() string {
-	return filepath.Join(RootDir, "versions")
+	return InRootDir("versions")
 }
 
 func ListVersions() ([]string, error) {
@@ -80,4 +80,8 @@ func ListVersions() ([]string, error) {
 		}
 	}
 	return versions, nil
+}
+
+func InRootDir(dir string) string {
+	return filepath.Join(RootDir, dir)
 }

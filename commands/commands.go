@@ -85,38 +85,44 @@ func Run() error {
 		return fmt.Errorf("failed to update pool control for version %s: %w", n.Version(), err)
 	}
 
+	thisV := n.Version()
+
+	notCurrentVersion := func(v string) bool {
+		return thisV == v
+	}
+
 	switch filepath.Base(os.Args[0]) {
 	case "npm":
 		return st.WhileCompactingPool(func(_s *state.State) error {
 			return n.Npm().Run(os.Args[1:]...)
-		})
+		}, notCurrentVersion)
 	case "yarn":
 		if err := installIfNotExists(n, "yarn"); err != nil {
 			return err
 		}
 		return st.WhileCompactingPool(func(_s *state.State) error {
 			return n.Yarn().Run(os.Args[1:]...)
-		})
+		}, notCurrentVersion)
 	case "npx":
 		return st.WhileCompactingPool(func(_s *state.State) error {
 			return n.Npx().Run(os.Args[1:]...)
-		})
+		}, notCurrentVersion)
 	case "corepack":
 		return st.WhileCompactingPool(func(_s *state.State) error {
 			return n.Corepack().Run(os.Args[1:]...)
-		})
+		}, notCurrentVersion)
 	case "pnpm":
 		if err := installIfNotExists(n, "pnpm"); err != nil {
 			return err
 		}
 		return st.WhileCompactingPool(func(_s *state.State) error {
 			return n.Pnpm().Run(os.Args[1:]...)
-		})
+		}, notCurrentVersion)
 	}
 
 	return st.WhileCompactingPool(func(_s *state.State) error {
 		return n.Run(os.Args[1:]...)
-	})
+	}, notCurrentVersion)
 }
 
 func installIfNotExists(n *pkg.N, bin string) error {
