@@ -52,9 +52,13 @@ func init() {
 type novmWakeCode = string
 
 var (
-	wakeCmd       = "1"
-	wakeStateDump = "2"
+	wakeCmd       novmWakeCode = "cli"
+	wakeStateDump novmWakeCode = "state"
 )
+
+func wakeCode() novmWakeCode {
+	return novmWakeCode(os.Getenv("NOVM_WAKE"))
+}
 
 func Run() error {
 	var err error
@@ -66,13 +70,16 @@ func Run() error {
 
 	root := common.RootDir
 
-	switch novmWakeCode(os.Getenv("NOVM_WAKE")) {
+	switch c := wakeCode(); c {
 	case wakeCmd:
 		return cmd.Root(root).Execute()
 	case wakeStateDump:
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
 		return enc.Encode(st)
+	default:
+		return fmt.Errorf("unknown wake code \"%s\"", c)
+	case "":
 	}
 
 	if NodeJsVersion == "" {
