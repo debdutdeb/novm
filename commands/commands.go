@@ -88,7 +88,7 @@ func Run() error {
 	thisV := n.Version()
 
 	notCurrentVersion := func(v string) bool {
-		return thisV == v
+		return thisV != v
 	}
 
 	switch filepath.Base(os.Args[0]) {
