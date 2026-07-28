@@ -33,7 +33,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - run: |
-          CGO_ENABLED=0 GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} go build -ldflags="-X 'github.com/debdutdeb/node-proxy/versions.Version=${{inputs.tag}}' -X 'github.com/debdutdeb/node-proxy/versions.BuildTime=$(date -u)' -X 'github.com/debdutdeb/node-proxy/versions.GitCommit=${{github.sha}}' -extldflags '-static'" -o novm-${{matrix.os}}-${{matrix.arch}} .
+          make build VERSION=${{inputs.tag}} COMMIT=${{github.sha}} BIN=novm-${{matrix.os}}-${{matrix.arch}} GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }}
         shell: bash
 
       - uses: softprops/action-gh-release@0bd7e8b279c9b5b36661d552472fbbfe671fe26e
