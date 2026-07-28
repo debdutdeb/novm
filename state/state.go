@@ -3,6 +3,7 @@ package state
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
@@ -138,6 +139,19 @@ func (s *State) acquirePoolCompactLock() error {
 	fd, err := unix.Open(compactionlockfile, unix.O_CREAT|unix.O_EXCL|unix.O_CLOEXEC, 0600)
 
 	if err != nil {
+		if os.IsExist(err) {
+			st := unix.Stat_t{}
+			if err := unix.Stat(compactionlockfile, &st); err != nil {
+				return fmt.Errorf("failed to process exising lock file: %w", err)
+			}
+			if time.Since(time.Unix(st.Mtim.Sec, 0)) > time.Hour*24 {
+				if err := s.releasePoolCompactLock(); err != nil {
+					return fmt.Errorf("failed to release 24 hours old stale lock file: %w", err)
+				}
+
+				return s.acquirePoolCompactLock()
+			}
+		}
 		return err
 	}
 
@@ -149,16 +163,16 @@ func (s *State) releasePoolCompactLock() error {
 }
 
 func (s *State) WhileCompactingPool(fn func(s *State) error, filter func(v version) bool) error {
+	if !s.ShouldControl() {
+		return fn(s)
+	}
+
 	if err := s.acquirePoolCompactLock(); err != nil {
 		if os.IsExist(err) {
 			return fn(s)
 		}
 
 		return err
-	}
-
-	if !s.ShouldControl() {
-		return fn(s)
 	}
 
 	/*
