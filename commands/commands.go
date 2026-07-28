@@ -8,7 +8,7 @@ import (
 
 	"github.com/debdutdeb/novm/v3/cmd"
 	"github.com/debdutdeb/novm/v3/common"
-	"github.com/debdutdeb/novm/v3/pkg"
+	"github.com/debdutdeb/novm/v3/pkg/n"
 	"github.com/debdutdeb/novm/v3/state"
 
 	"golang.org/x/mod/semver"
@@ -71,7 +71,7 @@ func Run() error {
 		}
 	}
 
-	n, err := pkg.NewNodeManager(false, NodeJsVersion, root)
+	n, err := n.NewNodeManager(false, NodeJsVersion, root)
 	if err != nil {
 		return fmt.Errorf("failed to initialize node manager: %w", err)
 	}
@@ -125,7 +125,7 @@ func Run() error {
 	}, notCurrentVersion)
 }
 
-func installIfNotExists(n *pkg.N, bin string) error {
+func installIfNotExists(n *n.N, bin string) error {
 	path := filepath.Join(common.RootDir, "bin", bin)
 	fst, err := os.Stat(path)
 	if err != nil {

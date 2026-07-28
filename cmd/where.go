@@ -6,7 +6,7 @@ import (
 	"runtime"
 
 	"github.com/debdutdeb/novm/v3/common"
-	"github.com/debdutdeb/novm/v3/pkg"
+	"github.com/debdutdeb/novm/v3/pkg/n"
 	"github.com/spf13/cobra"
 )
 
@@ -19,7 +19,7 @@ func whereCmd() *cobra.Command {
 		Long:    "get the location of installed version on disk",
 		Run: func(cmd *cobra.Command, args []string) {
 			version := args[0]
-			n, err := pkg.NewNodeManager(false, version, common.RootDir)
+			n, err := n.NewNodeManager(false, version, common.RootDir)
 			if err != nil {
 				log.Fatal(err)
 			}
