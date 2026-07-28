@@ -140,12 +140,12 @@ func (s *State) acquirePoolCompactLock() error {
 
 	if err != nil {
 		if os.IsExist(err) {
-			st := unix.Stat_t{}
-			if err := unix.Stat(compactionlockfile, &st); err != nil {
+			st, err := os.Stat(compactionlockfile)
+			if err != nil {
 				return fmt.Errorf("failed to process exising lock file: %w", err)
 			}
-			if time.Since(time.Unix(st.Mtim.Sec, 0)) > time.Hour*24 {
-				if err := s.releasePoolCompactLock(); err != nil {
+			if time.Since(st.ModTime()) > time.Hour*24 {
+				if err := s.releasePoolCompactLock(); err != nil && !os.IsNotExist(err) {
 					return fmt.Errorf("failed to release 24 hours old stale lock file: %w", err)
 				}
 
