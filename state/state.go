@@ -5,7 +5,6 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
-	"syscall"
 	"time"
 
 	"github.com/debdutdeb/novm/v3/common"
@@ -16,8 +15,6 @@ import (
 type version = string
 
 type State struct {
-	lockfd int
-
 	Update updateState `json:"update"`
 
 	PoolControl struct {
@@ -136,90 +133,65 @@ func (s *State) ShouldControl() bool {
 	return time.Since(s.PoolControl.LastControlled) >= time.Hour*24
 }
 
+var compactionlockfile = common.InRootDir(".versions.compact.lock")
+
 func (s *State) acquirePoolCompactLock() error {
-	fd, err := unix.Open(common.InRootDir(".versions.compact.lock"), unix.O_CREAT|unix.O_EXCL|unix.O_CLOEXEC, 0600)
+	fd, err := unix.Open(compactionlockfile, unix.O_CREAT|unix.O_EXCL|unix.O_CLOEXEC, 0600)
 
-	if err != nil && !os.IsExist(err) {
+	if err != nil {
 		return err
 	}
 
-	defer unix.Close(fd)
-
-	if err := syscall.Flock(fd, syscall.LOCK_EX); err != nil {
-		return err
-	}
-
-	s.lockfd = fd
-
-	return nil
+	return unix.Close(fd)
 }
 
 func (s *State) releasePoolCompactLock() error {
-	err := syscall.Flock(s.lockfd, syscall.LOCK_UN)
-	return err
+	return os.Remove(compactionlockfile)
 }
 
 func (s *State) WhileCompactingPool(fn func(s *State) error, filter func(v version) bool) error {
+	if err := s.acquirePoolCompactLock(); err != nil {
+		if os.IsExist(err) {
+			return fn(s)
+		}
+
+		return err
+	}
+
 	if !s.ShouldControl() {
 		return fn(s)
 	}
 
 	/*
 		Multiple instances can fight and end up dropping a version that's currently in use; even with a lock
+		This is a `wontfix` for now. It will add significant overhead to the compaction logic, each instance will need to reliably communicate back its usage.
+		even leases will have race conditions that won't be 100% bug free. so for now, wontfix.
 	*/
-
-	errch := make(chan error, 1)
 
 	errg := errgroup.Group{}
 	errg.SetLimit(-1)
 
-	go func() {
-		// this will lock goroutine if another process is still running;
-		if err := s.acquirePoolCompactLock(); err != nil {
-			if os.IsExist(err) {
-				close(errch)
-				return
-			}
+	defer s.releasePoolCompactLock()
 
-			errch <- err
-			return
+	versions, err := common.ListVersions()
+	if err != nil {
+		return errors.Join(errg.Wait(), err)
+	}
+	for _, ver := range versions {
+		if filter(ver) && s.ShouldClearPoolCache(ver) {
+			errg.Go(func() error { return os.RemoveAll(common.Where(ver)) })
 		}
-
-		defer s.releasePoolCompactLock()
-
-		if !s.ShouldControl() {
-			return
-		}
-
-		versions, err := common.ListVersions()
-		if err != nil {
-			err2 := errg.Wait()
-			errch <- errors.Join(err, err2)
-			return
-		}
-		for _, ver := range versions {
-			if filter(ver) && s.ShouldClearPoolCache(ver) {
-				errg.Go(func() error { return os.RemoveAll(common.Where(ver)) })
-			}
-		}
-	}()
-
-	select {
-	case err := <-errch:
-		return err
-	default:
-		err2 := fn(s)
-
-		// after a process we simply let go, as another process likely already finished with its cpompaction
-
-		err3, _ := <-errch
-
-		if err := errg.Wait(); err != nil {
-			return errors.Join(err, err2, err3)
-		}
-
-		s.PoolControl.LastControlled = time.Now()
-		return errors.Join(s.Save(), err2, err3)
 	}
 
+	err2 := fn(s)
+
+	// after a process we simply let go, as another process likely already finished with its cpompaction
+
+	if err := errg.Wait(); err != nil {
+		// if compaction fails, we don't update lastControlled
+		return errors.Join(err, err2)
+	}
+
+	s.PoolControl.LastControlled = time.Now()
+	return errors.Join(s.Save(), err2)
 }
