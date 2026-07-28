@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -48,6 +49,13 @@ func init() {
 	}
 }
 
+type novmWakeCode = string
+
+var (
+	wakeCmd       = "1"
+	wakeStateDump = "2"
+)
+
 func Run() error {
 	var err error
 
@@ -58,8 +66,13 @@ func Run() error {
 
 	root := common.RootDir
 
-	if os.Getenv("NOVM_WAKE") != "" {
+	switch novmWakeCode(os.Getenv("NOVM_WAKE")) {
+	case wakeCmd:
 		return cmd.Root(root).Execute()
+	case wakeStateDump:
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "  ")
+		return enc.Encode(st)
 	}
 
 	if NodeJsVersion == "" {
