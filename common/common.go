@@ -6,6 +6,8 @@ import (
 	"os/user"
 	"path/filepath"
 	"strconv"
+
+	"github.com/Masterminds/semver/v3"
 )
 
 var RootDir string
@@ -52,4 +54,30 @@ func DepthSourceDetection() int {
 	} else {
 		return n
 	}
+}
+
+func Where(version string) string {
+	return filepath.Join(VersionsDir(), version)
+}
+
+func VersionsDir() string {
+	return filepath.Join(RootDir, "versions")
+}
+
+func ListVersions() ([]string, error) {
+	versions := []string{}
+	dirs, err := os.ReadDir(VersionsDir())
+	if err != nil {
+		return nil, err
+	}
+	for _, d := range dirs {
+		if d.IsDir() {
+			_, err := semver.NewVersion(d.Name())
+			if err != nil {
+				continue
+			}
+			versions = append(versions, d.Name())
+		}
+	}
+	return versions, nil
 }

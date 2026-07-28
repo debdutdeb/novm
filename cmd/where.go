@@ -29,7 +29,7 @@ func whereCmd() *cobra.Command {
 				return
 			}
 
-			fmt.Printf("%s/versions/%s/%s/%s\n", common.RootDir, n.Version(), runtime.GOOS, runtime.GOARCH)
+			fmt.Printf("%s/%s/%s\n", common.Where(n.Version()), runtime.GOOS, runtime.GOARCH)
 		},
 	}
 	return &where

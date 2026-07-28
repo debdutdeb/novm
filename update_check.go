@@ -94,7 +94,7 @@ func checkUpdate(wg *sync.WaitGroup) error {
 		return err
 	}
 
-	req, err = http.NewRequest("GET", "https://api.github.com/repos/debdutdeb/novm/v3/releases/latest", nil)
+	req, err = http.NewRequest("GET", "https://api.github.com/repos/debdutdeb/novm/releases/latest", nil)
 	if err != nil {
 		waitAndLog("[ERROR] failed to fetch latest update: %v", err)
 		return err
@@ -114,13 +114,13 @@ func checkUpdate(wg *sync.WaitGroup) error {
 		return err
 	}
 
-	publishedAt, err := time.Parse("2006-01-02T15:04:05Z07:00", release.PublishedAt)
+	publishedAt, err := time.Parse(time.RFC3339, release.PublishedAt)
 	if err != nil {
-		waitAndLog("[ERROR] failed to parse publish time of a release %s", release.PublishedAt)
+		waitAndLog("[ERROR] failed to parse publish time of a release %q", release.PublishedAt)
 		return nil
 	}
 
-	buildTime, _ := time.Parse("Mon Jan _2 15:04:05 MST 2006", versions.BuildTime)
+	buildTime, _ := time.Parse(time.RFC3339, versions.BuildTime)
 
 	if semver.Compare(versions.Version, release.Tag) != -1 || buildTime.Sub(publishedAt) > 0 {
 		waitAndLog("no new novm updates found.")
