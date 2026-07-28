@@ -121,10 +121,9 @@ func (l *lastHitState) hasUsageAveragedOver10TimesPer3Days() bool {
 }
 
 func (s *State) ShouldClearPoolCache(v version) bool {
-	for ver, control := range s.PoolControl.Usage {
-		if ver == v && control.hasItBeen10DaysSinceLastUsed() && !control.hasUsageAveragedOver10TimesPer3Days() {
-			return true
-		}
+	control, exists := s.PoolControl.Usage[v]
+	if exists && control.hasItBeen10DaysSinceLastUsed() && !control.hasUsageAveragedOver10TimesPer3Days() {
+		return true
 	}
 	return false
 }
