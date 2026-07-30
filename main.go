@@ -1,10 +1,10 @@
 package main
 
 import (
-	"log"
 	"os"
 
 	"github.com/debdutdeb/novm/v3/commands"
+	"github.com/debdutdeb/novm/v3/internal/log"
 	"github.com/debdutdeb/novm/v3/utils"
 )
 
@@ -12,7 +12,6 @@ func main() {
 	if !utils.IsInteractive() {
 		if err := commands.Run(); err != nil {
 			log.Fatal(err)
-			os.Exit(1)
 		}
 		return
 	}

@@ -1,13 +1,13 @@
 package common
 
 import (
-	"log"
 	"os"
 	"os/user"
 	"path/filepath"
 	"strconv"
 
 	"github.com/Masterminds/semver/v3"
+	"github.com/debdutdeb/novm/v3/internal/log"
 )
 
 var RootDir string

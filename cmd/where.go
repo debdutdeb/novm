@@ -2,10 +2,11 @@ package cmd
 
 import (
 	"fmt"
-	"log"
+
 	"runtime"
 
 	"github.com/debdutdeb/novm/v3/common"
+	"github.com/debdutdeb/novm/v3/internal/log"
 	"github.com/debdutdeb/novm/v3/pkg/n"
 	"github.com/spf13/cobra"
 )

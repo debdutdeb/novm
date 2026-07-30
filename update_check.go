@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -19,6 +18,7 @@ import (
 
 	gopark "github.com/debdutdeb/gopark/pkg/utils"
 	"github.com/debdutdeb/novm/v3/common"
+	"github.com/debdutdeb/novm/v3/internal/log"
 	st "github.com/debdutdeb/novm/v3/state"
 	"github.com/debdutdeb/novm/v3/versions"
 )

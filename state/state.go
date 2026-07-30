@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"time"
@@ -35,7 +36,22 @@ type lastHitState struct {
 	FirstInstalled time.Time `json:"firstInstalled,omitempty"`
 }
 
+func withFileContents(f *os.File, err error) error {
+	f.Seek(io.SeekStart, 0)
+	c, err2 := io.ReadAll(f)
+	if err2 != nil {
+		return fmt.Errorf("err: %w, failed to open file for error logging: %w", err, err2)
+	}
+	return fmt.Errorf("err: %w, contents: %s", err, c)
+}
+
+var s *State = nil
+
 func NewState() (*State, error) {
+	if s != nil {
+		return s, nil
+	}
+
 	root := common.RootDir
 
 	f, err := os.Open(filepath.Join(root, "state.json"))
@@ -50,12 +66,14 @@ func NewState() (*State, error) {
 	var state State
 
 	if err := json.NewDecoder(f).Decode(&state); err != nil {
-		return nil, err
+		return nil, withFileContents(f, err)
 	}
 
 	if state.PoolControl.Usage == nil {
 		state.PoolControl.Usage = make(map[version]lastHitState)
 	}
+
+	s = &state
 
 	return &state, f.Close()
 }
