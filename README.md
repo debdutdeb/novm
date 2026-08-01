@@ -34,7 +34,12 @@ sudo ln -s $(which npm) $(dirname $(which npm))/node
 
 If at fresh install symlink fails, novm won't try again. This is to allow manual symlinking.
 
-Make sure you add `$HOME/.novm/bin` to your `PATH`. More [here](#install-directories).
+Make sure you add `$HOME/.novm/bin` to your `PATH`. More in [docs/usage.md](docs/usage.md#install-directories).
+
+## Documentation
+
+- **[Using novm](docs/usage.md)** — the full user guide: version detection sources, running/updating, the underlying `novm` CLI, install directories, environment variables, and troubleshooting.
+- **[Using novm as a Go module](docs/go-module.md)** — import `github.com/debdutdeb/novm/v3/pkg/n` to drive Node.js installs/execution from your own Go programs.
 
 ## Updates
 
@@ -55,12 +60,7 @@ I was on v1.2.x, and got automatically upgraded to current latest. Why? Because 
 
 ## Sources
 
-Currently the following sources are supported -
-1. `NODE_VERSION` environment variable.
-2. `NP_NODE_VERSION` environment variable.
-3. `engines.node` under `package.json`
-4. `volta.node` under `package.json`
-5. `.nvmrc` file
+`novm` detects the Node.js version to use from `NODE_VERSION`, `package.json` (`engines`/`volta`), `.nvmrc`, `.node-version`, and a couple of experimental sources. Full list and priority order in [docs/usage.md](docs/usage.md#how-version-detection-works).
 
 **Contributions to more sources will be very much appreciated.**
 
@@ -86,56 +86,15 @@ If there is no source, `novm` will either run latest version found locally or in
 
 All global installs go under `$HOME/.novm/bin` folder.
 
+More on the full layout, plus automatic cache cleanup, in [docs/usage.md](docs/usage.md#install-directories).
+
 ## Updating actual nodejs versions
 
 It all depends on what you have in your source. If it is an exact version, obviously won't auto update. If you have a constraint, at some point, if a new patch matches the constraint, or a new minor matches, it will be installed automatically.
 
 ## Checking out actual novm binary
 
-Use `NOVM_WAKE=1` with `node` or `npm` call, to get `novm` options.
-
-```
-[/tmp/example]$ NOVM_WAKE=1 node --help
-Usage:
-  novm [command]
-
-Available Commands:
-  completion  Generate the autocompletion script for the specified shell
-  help        Help about any command
-  version
-
-Flags:
-  -h, --help   help for novm
-
-Use "novm [command] --help" for more information about a command.
-```
-
-Check novm version
-
-```
-[/tmp/example]$ NOVM_WAKE=1 node version
-Version: v1.3.0
-GitCommit: cf13d8741fee6959d72dd8bae05cdb5750ca30e9
-BuildTime: Mon May  6 00:47:46 IST 2024
-```
-
-Without `NOVM_WAKE`, you'd be calling node itself.
-```
-[/tmp/example]$ node version
-node:internal/modules/cjs/loader:1031
-  throw err;
-  ^
-
-Error: Cannot find module '/private/tmp/example/version'
-    at Function.Module._resolveFilename (node:internal/modules/cjs/loader:1028:15)
-    at Function.Module._load (node:internal/modules/cjs/loader:873:27)
-    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:81:12)
-    at node:internal/main/run_main_module:22:47 {
-  code: 'MODULE_NOT_FOUND',
-  requireStack: []
-}
-2024/05/06 01:08:26 exit status 1
-```
+Use `NOVM_WAKE=1` with `node` or `npm` call, to get `novm` options (`version`, `where`, `setup`, `completion`). Without `NOVM_WAKE`, you'd be calling node itself. Full walkthrough and example output in [docs/usage.md](docs/usage.md#the-novm-cli).
 
 ## PS
 
